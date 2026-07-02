@@ -6,4 +6,5 @@ from models.enums import EventType
 class Event:
   time: int
   event_type: EventType
+  resource_id: int | None = None
   description: str
