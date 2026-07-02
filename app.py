@@ -1,27 +1,21 @@
-from models.tank import Tank
-from models.enums import TankState, Location
-from models.truck_head import TruckHead
-from models.enums import TruckState, Location
-from engine.clock import SimulationClock
 
-clock = SimulationClock()
+from engine.simulation import Simulator
 
-print(clock.current_day)
-print(clock.current_minute)
+simulator = Simulator()
 
-truck = TruckHead(
-    id=1,
-    state=TruckState.IDLE_AT_A,
-    location=Location.POINT_A
-)
+simulator.initialize()
 
-print(truck)
+print(simulator.clock.get_date_time())
 
-tank = Tank(
-    id=1,
-    capacity=520,
-    state=TankState.EMPTY_AT_A,
-    location=Location.POINT_A
-)
+print()
 
-print(tank)
+print("Tanks")
+for tank in simulator.tanks:
+    print(tank)
+
+print()
+
+print("Truck Heads")
+for truck in simulator.truck_heads:
+    print(truck)
+
