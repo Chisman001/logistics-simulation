@@ -40,3 +40,7 @@ class Simulator:
   def initialize(self):
     self.create_tanks()
     self.create_truck_heads()
+    print("Initializing simulation...")
+    print(f"Created {len(self.tanks)} tanks.")
+    print(f"Created {len(self.truck_heads)} truck heads.")
+    print("Simulation ready.")
