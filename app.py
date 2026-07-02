@@ -2,6 +2,12 @@ from models.tank import Tank
 from models.enums import TankState, Location
 from models.truck_head import TruckHead
 from models.enums import TruckState, Location
+from engine.clock import SimulationClock
+
+clock = SimulationClock()
+
+print(clock.current_day)
+print(clock.current_minute)
 
 truck = TruckHead(
     id=1,
