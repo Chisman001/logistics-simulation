@@ -22,6 +22,8 @@ class Simulator:
     self.event_queue = EventQueue()
 
   def create_tanks(self):
+    self.tanks = {}
+
     for i in range(1, self.config.NUM_TANKS + 1):
       tank = Tank(
         id=i,
@@ -30,7 +32,7 @@ class Simulator:
         location=Location.POINT_A,
       )
 
-      self.tanks.append(tank)
+      self.tanks[i] = tank
 
   def create_truck_heads(self):
     for i in range(1, self.config.NUM_TRUCK_HEADS + 1):
