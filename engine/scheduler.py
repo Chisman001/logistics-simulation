@@ -23,3 +23,26 @@ class Scheduler:
     )
 
     self.simulator.event_queue.add_event(event)
+
+  def on_tank_ready(self, tank):
+
+    available = self.simulator.get_available_trucks()
+
+    if not available:
+      print("No truck heads available.")
+      return
+
+    if not self.simulator.clock.is_working_hours():
+
+      wait = self.simulator.clock.minutes_until_next_work_start()
+
+      print(
+        f"Truck movement not allowed. "
+        f"Waiting {wait} minutes."
+      )
+
+      return
+
+    print(
+      f"Truck {available[0].id} can transport Tank {tank.id}."
+    )

@@ -1,5 +1,4 @@
-from multiprocessing import Event
-
+from engine.event import Event
 from config import Config
 from engine.clock import SimulationClock
 from engine.event_queue import EventQueue
@@ -17,9 +16,9 @@ class Simulator:
 
     self.clock = SimulationClock()
 
-    self.tanks = []
+    self.tanks = {}
 
-    self.truck_heads = []
+    self.truck_heads = {}
 
     self.event_queue = EventQueue()
 
@@ -44,7 +43,7 @@ class Simulator:
         location=Location.POINT_A,
       )
 
-      self.truck_heads.append(truck_head)
+      self.truck_heads[i] = truck_head
 
   def initialize(self):
     self.create_tanks()
@@ -59,7 +58,7 @@ class Simulator:
     self.clock.simulation_time = event.simulation_time
 
     print(
-      f"[{self.clock.get_datetime()}] "
+      f"[{self.clock.get_date_time()}] "
       f"{event.event_type.name}: "
       f"{event.description}"
     )
@@ -100,7 +99,9 @@ class Simulator:
 
 
   def handle_tank_fill_completed(self, event):
-    print("Handling tank fill completion...")
+    tank = self.tanks[event.resource_id]
+    tank.state = TankState.READY_AT_A
+    self.scheduler.on_tank_ready(tank)
 
 
   def handle_truck_departed(self, event):
@@ -109,3 +110,11 @@ class Simulator:
 
   def handle_truck_arrived(self, event):
     print("Handling truck arrival...")
+
+  def get_available_trucks(self):
+
+    return [
+        truck
+        for truck in self.truck_heads.values()
+        if truck.state == TruckState.IDLE_AT_A
+    ]

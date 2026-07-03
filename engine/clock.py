@@ -1,10 +1,10 @@
 from config import Config
 
-
 class SimulationClock:
 
   def __init__(self):
     self.simulation_time = 0
+    self.config = Config
 
   def advance(self, minutes: int):
     self.simulation_time += minutes
@@ -26,3 +26,37 @@ class SimulationClock:
 
   def get_date_time(self):
     return f"Day {self.get_day()} - {self.get_time()}"
+
+  def current_minute_of_day(self):
+    total = (
+        self.config.WORK_START +
+        self.simulation_time
+    ) % self.config.MINUTES_PER_DAY
+
+    return total
+
+  def is_working_hours(self):
+
+    minute = self.current_minute_of_day()
+
+    return (
+        self.config.WORK_START
+        <= minute
+        < self.config.WORK_END
+    )
+
+  def minutes_until_next_work_start(self):
+
+    minute = self.current_minute_of_day()
+
+    if minute < self.config.WORK_START:
+        return self.config.WORK_START - minute
+
+    if minute >= self.config.WORK_END:
+        return (
+            self.config.MINUTES_PER_DAY
+            - minute
+            + self.config.WORK_START
+        )
+
+    return 0
