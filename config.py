@@ -23,3 +23,6 @@ class Config:
 
   # Simulation
   SIMULATION_DAYS = 30
+
+  # Time
+  MINUTES_PER_DAY = 24 * 60

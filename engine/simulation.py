@@ -1,7 +1,8 @@
 from config import Config
 from engine.clock import SimulationClock
+from engine.event_queue import EventQueue
 from models.tank import Tank
-from models.enums import TankState, Location
+from models.enums import TankState, Location, EventType
 from models.truck_head import TruckHead
 from models.enums import TruckState
 from engine.scheduler import Scheduler
@@ -18,7 +19,7 @@ class Simulator:
 
     self.truck_heads = []
 
-    self.event_queue = []
+    self.event_queue = EventQueue()
 
   def create_tanks(self):
     for i in range(1, self.config.NUM_TANKS + 1):
@@ -44,7 +45,50 @@ class Simulator:
   def initialize(self):
     self.create_tanks()
     self.create_truck_heads()
+    self.scheduler.schedule_initial_events()
     print("Initializing simulation...")
     print(f"Created {len(self.tanks)} tanks.")
     print(f"Created {len(self.truck_heads)} truck heads.")
     print("Simulation ready.")
+
+  def process_event(self, event):
+    self.clock.simulation_time = event.simulation_time
+
+    print(
+      f"[{self.clock.get_datetime()}] "
+      f"{event.event_type.name}: "
+      f"{event.description}"
+    )
+
+    if event.event_type == EventType.TANK_FILL_STARTED:
+      self.handle_tank_fill_started(event)
+
+    elif event.event_type == EventType.TANK_FILL_COMPLETED:
+      self.handle_tank_fill_completed(event)
+
+    elif event.event_type == EventType.TRUCK_DEPARTED:
+      self.handle_truck_departed(event)
+
+    elif event.event_type == EventType.TRUCK_ARRIVED:
+      self.handle_truck_arrived(event)
+  def run(self):
+    while not self.event_queue.is_empty():
+
+      event = self.event_queue.get_next_event()
+
+      self.process_event(event)
+
+  def handle_tank_fill_started(self, event):
+    print("Handling tank filling...")
+
+
+  def handle_tank_fill_completed(self, event):
+    print("Handling tank fill completion...")
+
+
+  def handle_truck_departed(self, event):
+    print("Handling truck departure...")
+
+
+  def handle_truck_arrived(self, event):
+    print("Handling truck arrival...")

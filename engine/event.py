@@ -4,7 +4,7 @@ from models.enums import EventType
 
 @dataclass(order=True)
 class Event:
-  time: int
+  simulation_time: int
   event_type: EventType
   resource_id: int | None = None
-  description: str
+  description: str = ""
