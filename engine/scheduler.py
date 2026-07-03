@@ -26,23 +26,37 @@ class Scheduler:
 
   def on_tank_ready(self, tank):
 
-    available = self.simulator.get_available_trucks()
+    truck = self.get_available_truck()
 
-    if not available:
-      print("No truck heads available.")
-      return
+    if truck is None:
+        print("No truck available.")
+        return
 
-    if not self.simulator.clock.is_working_hours():
+    if not self.can_dispatch_now():
 
-      wait = self.simulator.clock.minutes_until_next_work_start()
+        wait = self.simulator.clock.minutes_until_next_work_start()
 
-      print(
-        f"Truck movement not allowed. "
-        f"Waiting {wait} minutes."
-      )
+        print(
+            f"Truck movement not allowed."
+            f" Wait {wait} minutes."
+        )
 
-      return
+        return
 
-    print(
-      f"Truck {available[0].id} can transport Tank {tank.id}."
+    self.schedule_departure(tank, truck)
+  
+  def schedule_departure(self, tank, truck):
+
+    event = Event(
+        simulation_time=self.simulator.clock.simulation_time,
+        event_type=EventType.TRUCK_DEPARTED,
+        truck_head_id=truck.id,
+        tank_id=tank.id,
+        description=f"Truck {truck.id} departed with Tank {tank.id}."
     )
+
+    self.simulator.event_queue.add_event(event)
+  
+  def can_dispatch_now(self):
+
+    return self.simulator.clock.is_working_hours()

@@ -17,6 +17,8 @@ class Location(Enum):
   POINT_B = auto()
   POINT_C = auto()
 
+  IN_TRANSIT_TO_C = auto()
+  IN_TRANSIT_TO_A = auto()
 
 class TruckState(Enum):
   IDLE_AT_A = auto()

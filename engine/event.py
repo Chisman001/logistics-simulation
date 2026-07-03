@@ -6,5 +6,6 @@ from models.enums import EventType
 class Event:
   simulation_time: int
   event_type: EventType
-  resource_id: int | None = None
+  truck_head_id: int | None = None
+  tank_id: int | None = None
   description: str = ""

@@ -105,11 +105,73 @@ class Simulator:
 
 
   def handle_truck_departed(self, event):
-    print("Handling truck departure...")
+
+    truck = self.truck_heads[event.truck_id]
+    tank = self.tanks[event.tank_id]
+
+    truck.state = TruckState.IN_TRANSIT_TO_C
+    truck.location = Location.IN_TRANSIT_TO_C
+
+    tank.state = TankState.IN_TRANSIT
+    tank.location = Location.IN_TRANSIT_TO_C
+
+    truck.current_tank = tank.id
+    tank.current_truck_head = truck.id
+
+    arrival = Event(
+    simulation_time=(
+        event.simulation_time
+        + self.config.TRAVEL_TIME
+    ),
+
+    event_type=EventType.TRUCK_ARRIVED,
+
+    truck_id=truck.id,
+    tank_id=tank.id,
+
+    description=(
+        f"Truck {truck.id} arrived "
+        f"with Tank {tank.id}."
+    )
+    )
+
+    self.event_queue.add_event(arrival)
 
 
   def handle_truck_arrived(self, event):
-    print("Handling truck arrival...")
+
+    # Get truck
+    truck = self.truck_heads[event.truck_id]
+
+    # Get tank
+    tank = self.tanks[event.tank_id]
+
+    # Move both to Point C
+    truck.location = Location.POINT_C
+    tank.location = Location.POINT_C
+
+    # Disconnect truck from tank
+    truck.current_tank = None
+    tank.current_truck_head = None
+
+    # Truck becomes available at Point C
+    truck.state = TruckState.IDLE_AT_C
+
+    # Tank begins supplying
+    tank.state = TankState.SUPPLYING
+
+    # Schedule TANK_EMPTY event
+    empty_event = Event(
+        simulation_time=(
+            event.simulation_time
+            + self.config.TANK_DURATION
+        ),
+        event_type=EventType.TANK_EMPTY,
+        truck_id=truck.id,
+        tank_id=tank.id,
+        description=f"Tank {tank.id} is now empty."
+    )
+    self.event_queue.add_event(empty_event)
 
   def get_available_trucks(self):
 
@@ -118,3 +180,14 @@ class Simulator:
         for truck in self.truck_heads.values()
         if truck.state == TruckState.IDLE_AT_A
     ]
+
+  def find_available_truck(self):
+
+    available = self.simulator.get_available_trucks()
+
+    if available:
+      return available[0]
+
+    return None
+
+  
