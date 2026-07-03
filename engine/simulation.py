@@ -1,3 +1,5 @@
+from multiprocessing import Event
+
 from config import Config
 from engine.clock import SimulationClock
 from engine.event_queue import EventQueue
@@ -81,7 +83,20 @@ class Simulator:
       self.process_event(event)
 
   def handle_tank_fill_started(self, event):
-    print("Handling tank filling...")
+    tank = self.tanks[event.resource_id]
+
+    tank.state = TankState.FILLING
+
+    print(f"Tank {tank.id} is now filling.")
+
+    completion_event = Event(
+        simulation_time=event.simulation_time + self.config.FILL_TIME,
+        event_type=EventType.TANK_FILL_COMPLETED,
+        resource_id=tank.id,
+        description=f"Tank {tank.id} finished filling."
+    )
+
+    self.event_queue.add_event(completion_event)
 
 
   def handle_tank_fill_completed(self, event):
