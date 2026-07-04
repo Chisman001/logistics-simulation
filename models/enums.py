@@ -41,4 +41,5 @@ class EventType(Enum):
   TRUCK_RETURNED = auto()
   TRUCK_RETURN_DEPARTED = auto()
   TRUCK_RETURN_ARRIVED = auto()
+  WORKDAY_STARTED = auto()
 

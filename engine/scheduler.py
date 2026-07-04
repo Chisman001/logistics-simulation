@@ -18,6 +18,7 @@ class Scheduler:
 
     # Truck heads available at Point C
     self.available_trucks_at_c = deque()
+    self.workday_start_scheduled = False
 
   def status(self):
     print("Scheduler Status")
@@ -38,25 +39,7 @@ class Scheduler:
       self.simulator.event_queue.add_event(event)
 
   def on_tank_ready(self, tank):
-
-    truck = self.get_available_truck()
-
-    if truck is None:
-        print("No truck available.")
-        return
-
-    if not self.can_dispatch_now():
-
-        wait = self.simulator.clock.minutes_until_next_work_start()
-
-        print(
-            f"Truck movement not allowed."
-            f" Wait {wait} minutes."
-        )
-
-        return
-
-    self.schedule_departure(tank, truck)
+    self.tank_ready(tank)
   
   def schedule_departure(self, tank, truck):
 
@@ -82,7 +65,7 @@ class Scheduler:
 
     if truck.id not in self.available_trucks_at_a:
       self.available_trucks_at_a.append(truck.id)
-      print(f"Scheduler: Truck {truck.id} available at Point A.")
+      self.simulator.log(f"Scheduler: Truck {truck.id} available at Point A.")
 
     self.try_dispatch()
 
@@ -90,7 +73,7 @@ class Scheduler:
 
     if truck.id not in self.available_trucks_at_c:
       self.available_trucks_at_c.append(truck.id)
-      print(f"Scheduler: Truck {truck.id} available at Point C.")
+      self.simulator.log(f"Scheduler: Truck {truck.id} available at Point C.")
 
     self.try_return()
 
@@ -98,7 +81,7 @@ class Scheduler:
 
     if tank.id not in self.waiting_full_tanks:
       self.waiting_full_tanks.append(tank.id)
-      print(f"Scheduler: Tank {tank.id} ready.")
+      self.simulator.log(f"Scheduler: Tank {tank.id} ready.")
 
     self.try_dispatch()
 
@@ -106,7 +89,7 @@ class Scheduler:
 
     if tank.id not in self.waiting_empty_tanks:
         self.waiting_empty_tanks.append(tank.id)
-        print(f"Scheduler: Tank {tank.id} empty at Point C.")
+        self.simulator.log(f"Scheduler: Tank {tank.id} empty at Point C.")
 
     self.try_return()
 
@@ -122,15 +105,21 @@ class Scheduler:
 
     # Trucks can't move now
     if not self.can_dispatch_now():
+        self.schedule_next_workday()
         return
 
-    tank_id = self.waiting_full_tanks.popleft()
-    truck_id = self.available_trucks_at_a.popleft()
+    while (
+        self.waiting_full_tanks
+        and self.available_trucks_at_a
+        and self.can_dispatch_now()
+    ):
+      tank_id = self.waiting_full_tanks.popleft()
+      truck_id = self.available_trucks_at_a.popleft()
 
-    tank = self.simulator.tanks[tank_id]
-    truck = self.simulator.truck_heads[truck_id]
+      tank = self.simulator.tanks[tank_id]
+      truck = self.simulator.truck_heads[truck_id]
 
-    self.schedule_departure(tank, truck)
+      self.schedule_departure(tank, truck)
 
 
   def try_return(self):
@@ -142,22 +131,28 @@ class Scheduler:
         return
 
     if not self.can_dispatch_now():
+        self.schedule_next_workday()
         return
 
-    tank_id = self.waiting_empty_tanks.popleft()
-    truck_id = self.available_trucks_at_c.popleft()
+    while (
+        self.waiting_empty_tanks
+        and self.available_trucks_at_c
+        and self.can_dispatch_now()
+    ):
+      tank_id = self.waiting_empty_tanks.popleft()
+      truck_id = self.available_trucks_at_c.popleft()
 
-    tank = self.simulator.tanks[tank_id]
-    truck = self.simulator.truck_heads[truck_id]
+      tank = self.simulator.tanks[tank_id]
+      truck = self.simulator.truck_heads[truck_id]
 
-    self.schedule_return(tank, truck)
+      self.schedule_return(tank, truck)
 
   def schedule_return(self, tank, truck):
 
     event = Event(
         simulation_time=self.simulator.clock.simulation_time,
         event_type=EventType.TRUCK_RETURN_DEPARTED,
-        truck_id=truck.id,
+        truck_head_id=truck.id,
         tank_id=tank.id,
         description=(
             f"Truck {truck.id} departed Point C "
@@ -166,3 +161,19 @@ class Scheduler:
     )
 
     self.simulator.event_queue.add_event(event)
+
+  def schedule_next_workday(self):
+
+    if self.workday_start_scheduled:
+        return
+
+    next_work_start = self.simulator.clock.next_work_start_time()
+
+    event = Event(
+        simulation_time=next_work_start,
+        event_type=EventType.WORKDAY_STARTED,
+        description="Workday started."
+    )
+
+    self.simulator.event_queue.add_event(event)
+    self.workday_start_scheduled = True

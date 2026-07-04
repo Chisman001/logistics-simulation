@@ -10,7 +10,9 @@ class SimulationClock:
     self.simulation_time += minutes
 
   def get_day(self):
-    return (self.simulation_time // Config.MINUTES_PER_DAY) + 1
+    total_minutes = self.config.WORK_START + self.simulation_time
+
+    return (total_minutes // self.config.MINUTES_PER_DAY) + 1
 
   def get_time(self):
     minutes_since_day_start = self.simulation_time % Config.MINUTES_PER_DAY
@@ -60,3 +62,6 @@ class SimulationClock:
         )
 
     return 0
+
+  def next_work_start_time(self):
+    return self.simulation_time + self.minutes_until_next_work_start()
