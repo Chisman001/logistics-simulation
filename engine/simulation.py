@@ -48,6 +48,8 @@ class Simulator:
   def initialize(self):
     self.create_tanks()
     self.create_truck_heads()
+    for truck in self.truck_heads.values():
+      self.scheduler.truck_available_at_a(truck)
     self.scheduler.schedule_initial_events()
     print("Initializing simulation...")
     print(f"Created {len(self.tanks)} tanks.")
@@ -74,6 +76,9 @@ class Simulator:
 
     elif event.event_type == EventType.TRUCK_ARRIVED:
       self.handle_truck_arrived(event)
+
+    elif event.event_type == EventType.TANK_EMPTY:
+      self.handle_tank_empty(event)
   def run(self):
     while not self.event_queue.is_empty():
 
@@ -82,7 +87,7 @@ class Simulator:
       self.process_event(event)
 
   def handle_tank_fill_started(self, event):
-    tank = self.tanks[event.resource_id]
+    tank = self.tanks[event.tank_id]
 
     tank.state = TankState.FILLING
 
@@ -91,7 +96,7 @@ class Simulator:
     completion_event = Event(
         simulation_time=event.simulation_time + self.config.FILL_TIME,
         event_type=EventType.TANK_FILL_COMPLETED,
-        resource_id=tank.id,
+        tank_id=tank.id,
         description=f"Tank {tank.id} finished filling."
     )
 
@@ -99,20 +104,20 @@ class Simulator:
 
 
   def handle_tank_fill_completed(self, event):
-    tank = self.tanks[event.resource_id]
+    tank = self.tanks[event.tank_id]
     tank.state = TankState.READY_AT_A
-    self.scheduler.on_tank_ready(tank)
+    self.scheduler.tank_ready(tank)
 
 
   def handle_truck_departed(self, event):
 
-    truck = self.truck_heads[event.truck_id]
+    truck = self.truck_heads[event.truck_head_id]
     tank = self.tanks[event.tank_id]
 
-    truck.state = TruckState.IN_TRANSIT_TO_C
+    truck.state = TruckState.DRIVING_TO_C
     truck.location = Location.IN_TRANSIT_TO_C
 
-    tank.state = TankState.IN_TRANSIT
+    tank.state = TankState.IN_TRANSIT_TO_C
     tank.location = Location.IN_TRANSIT_TO_C
 
     truck.current_tank = tank.id
@@ -126,7 +131,7 @@ class Simulator:
 
     event_type=EventType.TRUCK_ARRIVED,
 
-    truck_id=truck.id,
+    truck_head_id=truck.id,
     tank_id=tank.id,
 
     description=(
@@ -141,7 +146,7 @@ class Simulator:
   def handle_truck_arrived(self, event):
 
     # Get truck
-    truck = self.truck_heads[event.truck_id]
+    truck = self.truck_heads[event.truck_head_id]
 
     # Get tank
     tank = self.tanks[event.tank_id]
@@ -167,27 +172,21 @@ class Simulator:
             + self.config.TANK_DURATION
         ),
         event_type=EventType.TANK_EMPTY,
-        truck_id=truck.id,
+        truck_head_id=None,
         tank_id=tank.id,
         description=f"Tank {tank.id} is now empty."
     )
     self.event_queue.add_event(empty_event)
+    self.scheduler.truck_available_at_c(truck)
 
-  def get_available_trucks(self):
+  def handle_tank_empty(self, event):
+    tank = self.tanks[event.tank_id]
 
-    return [
-        truck
-        for truck in self.truck_heads.values()
-        if truck.state == TruckState.IDLE_AT_A
-    ]
+    tank.state = TankState.EMPTY_AT_C
+    tank.location = Location.POINT_C
 
-  def find_available_truck(self):
+    self.scheduler.tank_empty(tank)
 
-    available = self.simulator.get_available_trucks()
-
-    if available:
-      return available[0]
-
-    return None
+ 
 
   

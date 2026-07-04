@@ -1,7 +1,9 @@
 from engine.simulation import Simulator
 
-simulator = Simulator()
+def main():
+    simulator = Simulator()
+    simulator.initialize()
+    simulator.run()
 
-simulator.initialize()
-
-simulator.run()
+if __name__ == "__main__":
+    main()

@@ -5,8 +5,11 @@ from engine.event import Event
 class EventQueue:
     def __init__(self):
         self.events = []
+        self.sequence = 0
 
     def add_event(self, event: Event):
+        event.sequence = self.sequence
+        self.sequence += 1
         heapq.heappush(self.events, event)
 
     def get_next_event(self) -> Event:

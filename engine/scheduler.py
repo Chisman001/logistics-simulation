@@ -1,11 +1,23 @@
+from collections import deque
+
 from engine.event import Event
 from models.enums import EventType
 
 class Scheduler:
   def __init__(self, simulator):
     self.simulator = simulator
-    from engine.event_queue import EventQueue
-    self.event_queue = EventQueue()
+
+    # Tanks waiting at Point A
+    self.waiting_full_tanks = deque()
+
+    # Empty tanks waiting at Point C
+    self.waiting_empty_tanks = deque()
+
+    # Truck heads available at Point A
+    self.available_trucks_at_a = deque()
+
+    # Truck heads available at Point C
+    self.available_trucks_at_c = deque()
 
   def status(self):
     print("Scheduler Status")
@@ -15,14 +27,15 @@ class Scheduler:
     print(f"Time: {self.simulator.clock.get_date_time()}")
 
   def schedule_initial_events(self):
-    event = Event(
-      simulation_time=0,
-      event_type=EventType.TANK_FILL_STARTED,
-      resource_id=1,
-      description="Tank 1 started filling."
-    )
+    for tank in self.simulator.tanks.values():
+      event = Event(
+        simulation_time=0,
+        event_type=EventType.TANK_FILL_STARTED,
+        tank_id=tank.id,
+        description=f"Tank {tank.id} started filling."
+      )
 
-    self.simulator.event_queue.add_event(event)
+      self.simulator.event_queue.add_event(event)
 
   def on_tank_ready(self, tank):
 
@@ -60,3 +73,65 @@ class Scheduler:
   def can_dispatch_now(self):
 
     return self.simulator.clock.is_working_hours()
+
+  def on_truck_available(self, truck):
+
+    print(f"Truck {truck.id} is available.")
+
+  def truck_available_at_a(self, truck):
+
+    if truck.id not in self.available_trucks_at_a:
+      self.available_trucks_at_a.append(truck.id)
+      print(f"Scheduler: Truck {truck.id} available at Point A.")
+
+    self.try_dispatch()
+
+  def truck_available_at_c(self, truck):
+
+    if truck.id not in self.available_trucks_at_c:
+      self.available_trucks_at_c.append(truck.id)
+      print(f"Scheduler: Truck {truck.id} available at Point C.")
+
+    self.try_return()
+
+  def tank_ready(self, tank):
+
+    if tank.id not in self.waiting_full_tanks:
+      self.waiting_full_tanks.append(tank.id)
+      print(f"Scheduler: Tank {tank.id} ready.")
+
+    self.try_dispatch()
+
+  def tank_empty(self, tank):
+
+    if tank.id not in self.waiting_empty_tanks:
+        self.waiting_empty_tanks.append(tank.id)
+        print(f"Scheduler: Tank {tank.id} empty at Point C.")
+
+    self.try_return()
+
+  def try_dispatch(self):
+
+    # No tanks waiting
+    if not self.waiting_full_tanks:
+        return
+
+    # No trucks waiting
+    if not self.available_trucks_at_a:
+        return
+
+    # Trucks can't move now
+    if not self.can_dispatch_now():
+        return
+
+    tank_id = self.waiting_full_tanks.popleft()
+    truck_id = self.available_trucks_at_a.popleft()
+
+    tank = self.simulator.tanks[tank_id]
+    truck = self.simulator.truck_heads[truck_id]
+
+    self.schedule_departure(tank, truck)
+
+
+  def try_return(self):
+    pass
