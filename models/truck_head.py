@@ -12,5 +12,8 @@ class TruckHead:
   current_tank: int | None = None
   departed_at: int | None = None
   arrived_at: int | None = None
+  return_departed_at: int | None = None
   return_started_at: int | None = None
+  return_arrived_at: int | None = None
   returned_at: int | None = None
+  total_trips: int = 0

@@ -24,6 +24,9 @@ class Statistics:
 
     # Safety
     self.safety_violations = 0
+    self.total_safety_delay = 0
+
+    self.safety_delays = []
 
   # record dispatch
   def record_dispatch(self):
@@ -49,6 +52,13 @@ class Statistics:
   def record_completed_cycle(self):
     self.completed_cycles += 1
 
+  def record_cycle(self, tank):
+    if tank.fill_started_at is None or tank.returned_at is None:
+      return
+
+    cycle_time = tank.returned_at - tank.fill_started_at
+    self.record_cycle_time(cycle_time)
+
   def record_cycle_time(self, minutes: int):
     self.cycle_times.append(minutes)
     self.record_completed_cycle()
@@ -65,12 +75,23 @@ class Statistics:
     self.total_delivery_time += minutes
     self.delivery_times.append(minutes)
 
+  def record_delivery(self, tank):
+    if tank.departed_at is None or tank.empty_at is None:
+      return
+
+    delivery_time = tank.empty_at - tank.departed_at
+    self.record_delivery_time(delivery_time)
+    self.record_delivery_completion()
+
   def record_customer_downtime(self, minutes: int):
     self.total_consumer_downtime += minutes
 
   def record_empty_wait(self, minutes: int):
     self.total_empty_wait_time += minutes
+    self.empty_wait_times.append(minutes)
 
   # Safety violations
-  def record_safety_violation(self):
+  def record_safety_violation(self, delay):
     self.safety_violations += 1
+    self.total_safety_delay += delay
+    self.safety_delays.append(delay)

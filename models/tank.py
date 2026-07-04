@@ -15,7 +15,9 @@ class Tank:
   fill_completed_at: int | None = None
   supply_started_at: int | None = None
   empty_at: int | None = None
+  return_departed_at: int | None = None
   return_started_at: int | None = None
   returned_at: int | None = None
   departed_at: int | None = None
   arrived_at: int | None = None
+  total_cycles: int = 0
