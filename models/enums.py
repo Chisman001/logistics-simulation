@@ -39,4 +39,6 @@ class EventType(Enum):
   TANK_EMPTY = auto()
 
   TRUCK_RETURNED = auto()
+  TRUCK_RETURN_DEPARTED = auto()
+  TRUCK_RETURN_ARRIVED = auto()
 

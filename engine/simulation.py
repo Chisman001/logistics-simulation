@@ -1,3 +1,4 @@
+from engine import event
 from engine.event import Event
 from config import Config
 from engine.clock import SimulationClock
@@ -79,6 +80,11 @@ class Simulator:
 
     elif event.event_type == EventType.TANK_EMPTY:
       self.handle_tank_empty(event)
+    elif event.event_type == EventType.TRUCK_RETURN_DEPARTED:
+      self.handle_truck_return_departed(event)
+
+    elif event.event_type == EventType.TRUCK_RETURN_ARRIVED:
+      self.handle_truck_return_arrived(event)
   def run(self):
     while not self.event_queue.is_empty():
 
@@ -187,6 +193,63 @@ class Simulator:
 
     self.scheduler.tank_empty(tank)
 
- 
+  def handle_truck_return_departed(self, event):
 
-  
+    truck = self.truck_heads[event.truck_id]
+    tank = self.tanks[event.tank_id]
+
+    truck.state = TruckState.IN_TRANSIT_TO_A
+    truck.location = Location.IN_TRANSIT_TO_A
+
+    tank.location = Location.IN_TRANSIT_TO_A
+
+    truck.current_tank = tank.id
+    tank.current_truck = truck.id
+
+    arrival = Event(
+    simulation_time=(
+        event.simulation_time
+        + self.config.TRAVEL_TIME
+    ),
+
+    event_type=EventType.TRUCK_RETURN_ARRIVED,
+
+    truck_head_id=truck.id,
+    tank_id=tank.id,
+
+    description=(
+        f"Truck {truck.id} returned "
+        f"Tank {tank.id} to Point A."
+    )
+    )
+
+    self.event_queue.add_event(arrival)
+
+  def handle_truck_return_arrived(self, event):
+    # when truck reaches point A
+    truck = self.truck_heads[event.truck_head_id]
+    tank = self.tanks[event.tank_id]
+
+    # Update truck state and location
+    truck.state = TruckState.IDLE_AT_A
+    truck.location = Location.POINT_A
+
+    # Update tank state and location
+    tank.state = TankState.EMPTY_AT_A
+    tank.location = Location.POINT_A
+
+    # Disconnect truck from tank
+    truck.current_tank = None
+    tank.current_truck = None
+
+    # Notify scheduler that truck is available at Point A
+    self.scheduler.truck_available_at_a(truck)
+
+    # start filling returned tank
+    fill_event = Event(
+        simulation_time=event.simulation_time,
+        event_type=EventType.TANK_FILL_STARTED,
+        tank_id=tank.id,
+        description=f"Tank {tank.id} started filling."
+    )
+    self.event_queue.add_event(fill_event)

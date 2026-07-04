@@ -134,4 +134,35 @@ class Scheduler:
 
 
   def try_return(self):
-    pass
+
+    if not self.waiting_empty_tanks:
+        return
+
+    if not self.available_trucks_at_c:
+        return
+
+    if not self.can_dispatch_now():
+        return
+
+    tank_id = self.waiting_empty_tanks.popleft()
+    truck_id = self.available_trucks_at_c.popleft()
+
+    tank = self.simulator.tanks[tank_id]
+    truck = self.simulator.truck_heads[truck_id]
+
+    self.schedule_return(tank, truck)
+
+  def schedule_return(self, tank, truck):
+
+    event = Event(
+        simulation_time=self.simulator.clock.simulation_time,
+        event_type=EventType.TRUCK_RETURN_DEPARTED,
+        truck_id=truck.id,
+        tank_id=tank.id,
+        description=(
+            f"Truck {truck.id} departed Point C "
+            f"with empty Tank {tank.id}."
+        )
+    )
+
+    self.simulator.event_queue.add_event(event)
