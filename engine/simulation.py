@@ -152,7 +152,8 @@ class Simulator:
 
     report.print_summary()
 
-    print(self.statistics.truck_movements[:5])
+    report.print_baseline_report()
+
   def handle_tank_fill_started(self, event):
     tank = self.tanks[event.tank_id]
 

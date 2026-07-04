@@ -52,3 +52,30 @@ class Report:
           self.validation_result.total_gap_minutes
       )
     self.print_section("Consumer Service", consumer)
+
+  def print_baseline_report(self):
+    print()
+    print("=" * 40)
+    print("Baseline Configuration")
+    print("=" * 40)
+
+    print(f"Truck Heads: {self.config.NUM_TRUCK_HEADS}")
+    print(f"Tanks: {self.config.NUM_TANKS}")
+    print(f"Tank Capacity: {self.config.TANK_CAPACITY}")
+    print(f"Tank Duration: {self.config.TANK_DURATION} min")
+    print(f"Travel Time: {self.config.TRAVEL_TIME} min")
+    print(f"Fill Time: {self.config.FILL_TIME} min")
+    print(f"Safety Window: {self.config.SAFETY_WINDOW} min")
+
+    print()
+    print("=" * 40)
+    print("Baseline Results")
+    print("=" * 40)
+
+    print(f"Completed Deliveries: {self.statistics.completed_deliveries}")
+    print(f"Supply Operations: {self.statistics.supply_operations}")
+    print(f"Consumer Downtime: {self.statistics.total_consumer_downtime}")
+    print(f"Safety Violations: {self.statistics.safety_violations}")
+    print(f"Average Tank Wait: {self.statistics.average_tank_wait():.2f}")
+    print(f"Average Empty Tank Wait: {self.statistics.average_empty_tank_wait():.2f}")
+    print(f"Average Cycle Time: {self.statistics.average_cycle_time():.2f}")
