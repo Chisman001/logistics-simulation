@@ -7,11 +7,13 @@ from models.enums import TankState, Location, EventType
 from models.truck_head import TruckHead
 from models.enums import TruckState
 from engine.scheduler import Scheduler
+from analytics.statistics import Statistics
 
 
 class Simulator:
   def __init__(self):
     self.config = Config()
+    self.statistics = Statistics()
     self.scheduler = Scheduler(self)
 
     self.clock = SimulationClock()
@@ -123,6 +125,7 @@ class Simulator:
     tank = self.tanks[event.tank_id]
 
     tank.state = TankState.FILLING
+    tank.fill_started_at = event.simulation_time
 
     self.log(f"Tank {tank.id} is now filling.")
 
@@ -139,6 +142,7 @@ class Simulator:
   def handle_tank_fill_completed(self, event):
     tank = self.tanks[event.tank_id]
     tank.state = TankState.READY_AT_A
+    tank.fill_completed_at = event.simulation_time
     self.scheduler.tank_ready(tank)
 
 
@@ -155,6 +159,13 @@ class Simulator:
 
     truck.current_tank = tank.id
     tank.current_truck_head = truck.id
+
+    # Record departure timestamps
+    truck.departed_at = event.simulation_time
+    tank.departed_at = event.simulation_time
+    if tank.fill_completed_at is not None:
+      waiting = tank.departed_at - tank.fill_completed_at
+      self.statistics.record_tank_wait(waiting)
 
     arrival = Event(
     simulation_time=(
@@ -198,6 +209,11 @@ class Simulator:
     # Tank begins supplying
     tank.state = TankState.SUPPLYING
 
+    # Record arrival and supply start times
+    truck.arrived_at = event.simulation_time
+    tank.arrived_at = event.simulation_time
+    tank.supply_started_at = event.simulation_time
+
     # Schedule TANK_EMPTY event
     empty_event = Event(
         simulation_time=(
@@ -214,6 +230,12 @@ class Simulator:
 
   def handle_tank_empty(self, event):
     tank = self.tanks[event.tank_id]
+
+    tank.empty_at = event.simulation_time
+    if tank.departed_at is not None:
+      delivery_time = tank.empty_at - tank.departed_at
+      self.statistics.record_delivery_time(delivery_time)
+      self.statistics.record_delivery_completion()
 
     tank.state = TankState.EMPTY_AT_C
     tank.location = Location.POINT_C
@@ -233,6 +255,10 @@ class Simulator:
 
     truck.current_tank = tank.id
     tank.current_truck_head = truck.id
+
+    # Record return departure timestamps
+    truck.return_started_at = event.simulation_time
+    tank.return_started_at = event.simulation_time
 
     arrival = Event(
     simulation_time=(
@@ -269,6 +295,13 @@ class Simulator:
     # Disconnect truck from tank
     truck.current_tank = None
     tank.current_truck_head = None
+
+    # Record return completion timestamps
+    truck.returned_at = event.simulation_time
+    tank.returned_at = event.simulation_time
+    if tank.fill_started_at is not None:
+      cycle_time = tank.returned_at - tank.fill_started_at
+      self.statistics.record_cycle_time(cycle_time)
 
     # Notify scheduler that truck is available at Point A
     self.scheduler.truck_available_at_a(truck)
