@@ -25,8 +25,11 @@ class Statistics:
     # Safety
     self.safety_violations = 0
     self.total_safety_delay = 0
-
     self.safety_delays = []
+
+    self.simulation_duration = 0
+    self.supply_intervals = []
+    self.truck_movements = []
 
   # record dispatch
   def record_dispatch(self):
@@ -95,3 +98,25 @@ class Statistics:
     self.safety_violations += 1
     self.total_safety_delay += delay
     self.safety_delays.append(delay)
+
+  def open_supply_interval(self, tank_id, start, arrived_at):
+    self.supply_intervals.append({
+        "tank_id": tank_id,
+        "start": start,
+        "end": None,
+        "arrived_at": arrived_at,
+    })
+
+  def close_supply_interval(self, tank_id, end):
+    for interval in reversed(self.supply_intervals):
+      if interval["tank_id"] == tank_id and interval["end"] is None:
+        interval["end"] = end
+        return
+
+  def record_truck_movement(self, truck_id, event_type, sim_time, tank_id):
+    self.truck_movements.append({
+        "truck_id": truck_id,
+        "event_type": event_type,
+        "sim_time": sim_time,
+        "tank_id": tank_id,
+    })

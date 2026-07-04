@@ -19,6 +19,7 @@ class Scheduler:
     # Truck heads available at Point C
     self.available_trucks_at_c = deque()
     self.workday_start_scheduled = False
+    self.dispatch_ready_scheduled = False
 
   def status(self):
     print("Scheduler Status")
@@ -93,20 +94,88 @@ class Scheduler:
 
     self.try_return()
 
+  def is_working_hours_at(self, simulation_time):
+    config = self.simulator.config
+    minute_of_day = (
+        config.WORK_START + simulation_time
+    ) % config.MINUTES_PER_DAY
+    return config.WORK_START <= minute_of_day < config.WORK_END
+
+  def next_work_start_after(self, simulation_time):
+    config = self.simulator.config
+    minute_of_day = (
+        config.WORK_START + simulation_time
+    ) % config.MINUTES_PER_DAY
+
+    if minute_of_day < config.WORK_START:
+      return simulation_time + (config.WORK_START - minute_of_day)
+
+    if minute_of_day >= config.WORK_END:
+      return (
+          simulation_time
+          + (config.MINUTES_PER_DAY - minute_of_day)
+          + config.WORK_START
+      )
+
+    return simulation_time
+
+  def effective_departure_time(self, target_departure):
+    now = self.simulator.clock.simulation_time
+    departure = max(target_departure, now)
+
+    while not self.is_working_hours_at(departure):
+      departure = self.next_work_start_after(departure)
+      if departure < now:
+        departure = now
+
+    return departure
+
+  def schedule_dispatch_ready(self, target_time):
+    if self.dispatch_ready_scheduled:
+      return
+
+    departure_time = self.effective_departure_time(target_time)
+
+    if departure_time <= self.simulator.clock.simulation_time:
+      self.try_dispatch()
+      return
+
+    event = Event(
+        simulation_time=departure_time,
+        event_type=EventType.DISPATCH_READY,
+        description="Dispatch window ready.",
+    )
+    self.simulator.event_queue.add_event(event)
+    self.dispatch_ready_scheduled = True
+
   def try_dispatch(self):
 
-    # No tanks waiting
     if not self.waiting_full_tanks:
         return
 
-    # No trucks waiting
     if not self.available_trucks_at_a:
         return
 
-    # Trucks can't move now
-    if not self.can_dispatch_now():
-        self.schedule_next_workday()
+    now = self.simulator.clock.simulation_time
+    target_arrival = self.simulator.next_required_connection_time()
+
+    if target_arrival is None:
+      target_departure = now
+    else:
+      latest_arrival = self.simulator.latest_preposition_arrival_time(target_arrival)
+      target_departure = latest_arrival - self.simulator.config.TRAVEL_TIME
+
+    if target_departure > now:
+      if self.can_dispatch_now():
+        self.schedule_dispatch_ready(target_departure)
         return
+
+      self.schedule_next_workday()
+      return
+
+    if not self.can_dispatch_now():
+      self.schedule_next_workday()
+      return
 
     while (
         self.waiting_full_tanks

@@ -32,6 +32,7 @@ class EventType(Enum):
 
   TRUCK_DEPARTED = auto()
   TRUCK_ARRIVED = auto()
+  SUPPLY_STARTED = auto()
 
   TANK_CONNECTED = auto()
   TANK_DISCONNECTED = auto()
@@ -42,4 +43,5 @@ class EventType(Enum):
   TRUCK_RETURN_DEPARTED = auto()
   TRUCK_RETURN_ARRIVED = auto()
   WORKDAY_STARTED = auto()
+  DISPATCH_READY = auto()
 

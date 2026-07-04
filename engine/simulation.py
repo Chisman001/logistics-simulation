@@ -1,3 +1,6 @@
+from analytics.metrics import Metrics
+from analytics.reports import Report
+from analytics.validator import SimulationValidator
 from engine.event import Event
 from config import Config
 from engine.clock import SimulationClock
@@ -25,7 +28,10 @@ class Simulator:
     self.event_queue = EventQueue()
     self.last_log_day = None
     self.last_log_time = None
-    self.current_supply_tank = None
+    self.active_supply_tank = None
+    self.waiting_tanks_at_c = []
+    self.pending_supply_tank = None
+    self.supply_gap_started_at = None
 
   def create_tanks(self):
     self.tanks = {}
@@ -95,6 +101,9 @@ class Simulator:
     elif event.event_type == EventType.TRUCK_ARRIVED:
       self.handle_truck_arrived(event)
 
+    elif event.event_type == EventType.SUPPLY_STARTED:
+      self.handle_supply_started(event)
+
     elif event.event_type == EventType.TANK_EMPTY:
       self.handle_tank_empty(event)
     elif event.event_type == EventType.TRUCK_RETURN_DEPARTED:
@@ -105,6 +114,9 @@ class Simulator:
 
     elif event.event_type == EventType.WORKDAY_STARTED:
       self.handle_workday_started(event)
+
+    elif event.event_type == EventType.DISPATCH_READY:
+      self.handle_dispatch_ready(event)
 
     self.assert_consistent_state()
   def run(self):
@@ -122,6 +134,25 @@ class Simulator:
 
       self.process_event(event)
 
+    self.statistics.simulation_duration = self.clock.simulation_time
+    metrics = Metrics(self.statistics)
+
+    validation_result = None
+    if self.config.VALIDATE_ON_COMPLETE:
+      validator = SimulationValidator(self.statistics, self.config)
+      validation_result = validator.validate()
+      validator.print_report()
+      if (
+          self.config.PRINT_SUPPLY_TIMELINE
+          or self.config.SIMULATION_DAYS <= 2
+      ):
+        validator.print_supply_timeline()
+
+    report = Report(metrics, self.config, validation_result)
+
+    report.print_summary()
+
+    print(self.statistics.truck_movements[:5])
   def handle_tank_fill_started(self, event):
     tank = self.tanks[event.tank_id]
 
@@ -146,7 +177,36 @@ class Simulator:
     tank.state = TankState.READY_AT_A
     tank.fill_completed_at = event.simulation_time
     self.scheduler.tank_ready(tank)
+    self.preposition_ready_tanks_for_next_handover()
 
+  def preposition_ready_tanks_for_next_handover(self):
+    if self.active_supply_tank is None:
+      return
+
+    target_arrival = self.next_required_connection_time()
+    if target_arrival is None:
+      return
+
+    for tank in list(self.tanks.values()):
+      if tank.state != TankState.READY_AT_A:
+        continue
+
+      if tank.supply_started_at is not None:
+        continue
+
+      if tank.id in self.scheduler.waiting_full_tanks:
+        self.scheduler.waiting_full_tanks.remove(tank.id)
+
+      tank.state = TankState.WAITING_AT_C
+      tank.location = Location.POINT_C
+      tank.arrived_at = self.clock.simulation_time
+
+      if tank not in self.waiting_tanks_at_c:
+        self.waiting_tanks_at_c.append(tank)
+
+      self.log(f"Tank {tank.id} pre-positioned at Point C for the next handover.")
+
+    self.promote_next_waiting_tank()
 
   def handle_truck_departed(self, event):
 
@@ -165,7 +225,13 @@ class Simulator:
     # Record departure timestamps
     truck.departed_at = event.simulation_time
     tank.departed_at = event.simulation_time
+    tank.arrived_at = None
+    tank.supply_started_at = None
+    tank.empty_at = None
     self.statistics.record_dispatch()
+    self.statistics.record_truck_movement(
+        truck.id, "TRUCK_DEPARTED", event.simulation_time, tank.id
+    )
     if tank.fill_completed_at is not None:
       waiting = tank.departed_at - tank.fill_completed_at
       self.statistics.record_tank_wait(waiting)
@@ -192,93 +258,255 @@ class Simulator:
 
   def handle_truck_arrived(self, event):
 
-    # Get truck
     truck = self.truck_heads[event.truck_head_id]
-
-    # Get tank
     tank = self.tanks[event.tank_id]
 
-    # Move both to Point C
     truck.location = Location.POINT_C
     tank.location = Location.POINT_C
 
-    # Disconnect truck from tank
     truck.current_tank = None
     tank.current_truck_head = None
 
-    # Truck becomes available at Point C
     truck.state = TruckState.IDLE_AT_C
+    tank.state = TankState.WAITING_AT_C
 
-    # Tank begins supplying
-    tank.state = TankState.SUPPLYING
-
-    # Record arrival and supply start times
     truck.arrived_at = event.simulation_time
     tank.arrived_at = event.simulation_time
-    tank.supply_started_at = event.simulation_time
-    if self.current_supply_tank is not None:
-      previous = self.current_supply_tank
 
-      expected_empty = (
-        previous.supply_started_at
+    if tank not in self.waiting_tanks_at_c:
+      self.waiting_tanks_at_c.append(tank)
+
+    self.scheduler.truck_available_at_c(truck)
+    self.promote_next_waiting_tank()
+
+  def next_required_connection_time(self):
+    if self.active_supply_tank is None:
+      return None
+
+    return (
+        self.active_supply_tank.supply_started_at
         + self.config.TANK_DURATION
-      )
+        - self.config.SAFETY_WINDOW
+    )
 
-      if tank.supply_started_at > expected_empty:
-        downtime = (
-          tank.supply_started_at
-          - expected_empty
-        )
+  def latest_preposition_arrival_time(self, target_arrival):
+    if target_arrival is None:
+      return None
+
+    day_start = self.clock.simulation_time - (self.clock.simulation_time % self.config.MINUTES_PER_DAY)
+    work_end = day_start + self.config.WORK_END
+    return min(target_arrival, work_end)
+
+  def has_successor_at_c(self):
+    for tank in self.tanks.values():
+      if tank.state == TankState.IN_TRANSIT_TO_C:
+        return True
+
+    return False
+
+  def _consumer_has_supply(self):
+    for tank in self.tanks.values():
+      if tank.state == TankState.SUPPLYING:
+        return True
+
+    if self.pending_supply_tank is not None:
+      return True
+
+    return False
+
+  def _record_supply_gap_downtime(self, resume_time):
+    if self.supply_gap_started_at is None:
+      return
+
+    gap = resume_time - self.supply_gap_started_at
+    if gap > 0:
+      self.statistics.record_customer_downtime(gap)
+    self.supply_gap_started_at = None
+
+  def log_handover_trace(
+    self,
+    tank,
+    arrival_time,
+    supply_start,
+    expected_empty,
+    required_connection,
+    delay,
+    downtime,
+  ):
+    print()
+    print(f"Tank {tank.id}")
+    print(f"  Arrived:           {arrival_time}")
+    print(f"  Supply starts:     {supply_start}")
+    print(f"  Expected empty:    {expected_empty}")
+    print(f"  Required connect:  {required_connection}")
+    print(f"  Wait at C:         {supply_start - arrival_time}")
+    print(f"  Safety delay:      {delay}")
+    print(f"  Downtime:          {downtime}")
+
+  def schedule_supply_start(self, tank, arrival_time):
+    if tank.supply_started_at is not None:
+      return
+
+    if self.pending_supply_tank is not None:
+      return
+
+    previous = self.active_supply_tank
+    expected_empty = None
+    required_connection = None
+    delay = 0
+    downtime = 0
+
+    if previous is None:
+      if self.clock.simulation_time == 0:
+        supply_start = self.config.WORK_START
+      else:
+        supply_start = max(arrival_time, self.clock.simulation_time)
+    else:
+      expected_empty = (
+          previous.supply_started_at + self.config.TANK_DURATION
+      )
+      required_connection = expected_empty - self.config.SAFETY_WINDOW
+      supply_start = max(arrival_time, required_connection)
+      if supply_start < self.clock.simulation_time:
+        supply_start = self.clock.simulation_time
+
+      if supply_start > expected_empty:
+        downtime = supply_start - expected_empty
         self.statistics.record_customer_downtime(downtime)
 
-      required_time = (
-        expected_empty
-        - self.config.SAFETY_WINDOW
+      if supply_start > required_connection:
+        delay = supply_start - required_connection
+        self.statistics.record_safety_violation(delay)
+
+    if self.config.DEBUG_HANDOVER:
+      self.log_handover_trace(
+          tank,
+          arrival_time,
+          supply_start,
+          expected_empty,
+          required_connection,
+          delay,
+          downtime,
       )
 
-      if tank.supply_started_at > required_time:
-        delay = (
-          tank.supply_started_at
-          - required_time
-        )
+    if supply_start <= self.clock.simulation_time:
+      self.start_supply_for_tank(tank, self.clock.simulation_time)
+    else:
+      self.schedule_supply_changeover(tank, supply_start)
 
-        self.statistics.record_safety_violation(delay)
-    self.current_supply_tank = tank
+    if self.active_supply_tank is None and self.pending_supply_tank is None:
+      self.preposition_ready_tanks_for_next_handover()
 
+    if self.active_supply_tank is None and self.pending_supply_tank is None:
+      self.preposition_ready_tanks_for_next_handover()
+
+  def promote_next_waiting_tank(self):
+    if not self.waiting_tanks_at_c:
+      return
+
+    if self.pending_supply_tank is not None:
+      return
+
+    next_tank = self.waiting_tanks_at_c[0]
+
+    if next_tank.state != TankState.WAITING_AT_C:
+      return
+
+    if next_tank.supply_started_at is not None:
+      return
+
+    if next_tank.arrived_at is None:
+      return
+
+    self.schedule_supply_start(next_tank, next_tank.arrived_at)
+
+  def schedule_supply_changeover(self, tank, start_time):
+    if tank.supply_started_at is not None:
+      return
+
+    if self.pending_supply_tank is not None:
+      return
+
+    self.pending_supply_tank = tank
+    changeover_event = Event(
+        simulation_time=start_time,
+        event_type=EventType.SUPPLY_STARTED,
+        truck_head_id=None,
+        tank_id=tank.id,
+        description=f"Tank {tank.id} started supplying."
+    )
+    self.event_queue.add_event(changeover_event)
+
+  def start_supply_for_tank(self, tank, event_time):
+    if tank.supply_started_at is not None:
+      return
+
+    if tank.state != TankState.WAITING_AT_C:
+      return
+
+    if tank in self.waiting_tanks_at_c:
+      self.waiting_tanks_at_c.remove(tank)
+
+    self.active_supply_tank = tank
+
+    tank.state = TankState.SUPPLYING
+    tank.supply_started_at = event_time
     self.statistics.record_supply()
+    self.statistics.open_supply_interval(
+        tank.id, event_time, tank.arrived_at
+    )
+    self._record_supply_gap_downtime(event_time)
+    self.pending_supply_tank = None
+    self.preposition_ready_tanks_for_next_handover()
 
-    # Schedule TANK_EMPTY event
+    self.log(f"Tank {tank.id} started supplying.")
+
     empty_event = Event(
-        simulation_time=(
-            event.simulation_time
-            + self.config.TANK_DURATION
-        ),
+        simulation_time=(event_time + self.config.TANK_DURATION),
         event_type=EventType.TANK_EMPTY,
         truck_head_id=None,
         tank_id=tank.id,
         description=f"Tank {tank.id} is now empty."
     )
     self.event_queue.add_event(empty_event)
-    self.scheduler.truck_available_at_c(truck)
+    self.promote_next_waiting_tank()
+    self.scheduler.try_dispatch()
+
+  def handle_supply_started(self, event):
+    tank = self.tanks[event.tank_id]
+
+    if tank.supply_started_at is not None:
+      return
+
+    if tank.state != TankState.WAITING_AT_C:
+      return
+
+    self.start_supply_for_tank(tank, event.simulation_time)
 
   def handle_tank_empty(self, event):
     tank = self.tanks[event.tank_id]
 
     tank.empty_at = event.simulation_time
+    self.statistics.close_supply_interval(tank.id, event.simulation_time)
     self.statistics.record_delivery(tank)
 
     tank.state = TankState.EMPTY_AT_C
     tank.location = Location.POINT_C
 
-    tank.return_departed_at = event.simulation_time
-    waiting_time = (
-    tank.return_departed_at
-    - tank.empty_at
-    )
-
-    self.statistics.record_empty_wait(waiting_time)
-
     self.scheduler.tank_empty(tank)
+
+    if self.active_supply_tank is tank:
+      self.active_supply_tank = None
+      self.promote_next_waiting_tank()
+
+    if not self._consumer_has_supply() and self.supply_gap_started_at is None:
+      self.supply_gap_started_at = event.simulation_time
+
+    self.scheduler.try_dispatch()
+
+  def handle_dispatch_ready(self, event):
+    self.scheduler.dispatch_ready_scheduled = False
+    self.scheduler.try_dispatch()
 
   def handle_truck_return_departed(self, event):
 
@@ -299,6 +527,14 @@ class Simulator:
     truck.return_started_at = event.simulation_time
     tank.return_departed_at = event.simulation_time
     tank.return_started_at = event.simulation_time
+
+    if tank.empty_at is not None:
+      waiting_time = tank.return_departed_at - tank.empty_at
+      self.statistics.record_empty_wait(waiting_time)
+
+    self.statistics.record_truck_movement(
+        truck.id, "TRUCK_RETURN_DEPARTED", event.simulation_time, tank.id
+    )
 
     arrival = Event(
     simulation_time=(

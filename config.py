@@ -17,12 +17,15 @@ class Config:
   WORK_START = 6 * 60
   WORK_END = 18 * 60
 
-  # Resources
+  # Resources   
   NUM_TANKS = 4
   NUM_TRUCK_HEADS = 2
 
   # Simulation
   SIMULATION_DAYS = 30
+  DEBUG_HANDOVER = False
+  PRINT_SUPPLY_TIMELINE = False
+  VALIDATE_ON_COMPLETE = True
 
   # Time
   MINUTES_PER_DAY = 24 * 60

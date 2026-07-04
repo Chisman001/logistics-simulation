@@ -65,3 +65,14 @@ class SimulationClock:
 
   def next_work_start_time(self):
     return self.simulation_time + self.minutes_until_next_work_start()
+
+  @staticmethod
+  def format_sim_time(simulation_time: int) -> str:
+    config = Config
+    day = (config.WORK_START + simulation_time) // config.MINUTES_PER_DAY + 1
+    minutes_since_day_start = simulation_time % config.MINUTES_PER_DAY
+    total_minutes = config.WORK_START + minutes_since_day_start
+    total_minutes %= config.MINUTES_PER_DAY
+    hours = total_minutes // 60
+    minutes = total_minutes % 60
+    return f"Day {day}  {hours:02d}:{minutes:02d}"
