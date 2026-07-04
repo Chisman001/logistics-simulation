@@ -1,11 +1,13 @@
 from analytics.statistics import Statistics
 from optimization.scenerio import Scenario
+from analytics.metrics import Metrics
 
 class Objective:
 
     def calculate_score(
         self,
         statistics: Statistics,
+        metrics: Metrics,
         scenario: Scenario,
     ) -> float:
         score = 100.0
@@ -14,13 +16,13 @@ class Objective:
 
         score -= self._safety_penalty(statistics)
 
-        score -= self._tank_wait_penalty(statistics)
-
-        score -= self._empty_wait_penalty(statistics)
-
         score -= self._resource_penalty(scenario)
 
-        return max(score, 0)
+        score -= self._tank_wait_penalty(metrics)
+
+        score -= self._empty_wait_penalty(metrics)
+
+        return round(max(score, 0), 2)
 
     def _downtime_penalty(
         self,
@@ -42,19 +44,21 @@ class Objective:
 
     def _tank_wait_penalty(
         self,
-        statistics: Statistics,
+        metrics: Metrics,
     ) -> float:
+        tank = metrics.tank_performance()
         return (
-            statistics.average_tank_wait()
+            tank['Average Tank Wait']
             * 0.01
         )
 
     def _empty_wait_penalty(
         self,
-        statistics: Statistics,
+        metrics: Metrics,
     ) -> float:
+        fleet = metrics.fleet_performance()
         return (
-            statistics.average_empty_tank_wait()
+            fleet['Average Empty Tank Wait']
             * 0.01
         )
 

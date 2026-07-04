@@ -2,6 +2,7 @@ from optimization.objective import Objective
 from optimization.result import OptimizationResult
 from optimization.runner import SimulationRunner
 from analytics.statistics import Statistics
+from analytics.metrics import Metrics
 from optimization.scenerio import Scenario
 
 
@@ -20,9 +21,11 @@ class Optimizer:
       )
 
       statistics = simulator.statistics
+      metrics = Metrics(statistics)
 
       score = self.objective.calculate_score(
           statistics,
+          metrics,
           scenario,
       )
 

@@ -14,8 +14,10 @@ from analytics.statistics import Statistics
 
 
 class Simulator:
-  def __init__(self):
-    self.config = Config()
+  def __init__(self, config=None):
+    if config is None:
+      config = Config()
+    self.config = config
     self.statistics = Statistics()
     self.scheduler = Scheduler(self)
 
@@ -120,6 +122,7 @@ class Simulator:
 
     self.assert_consistent_state()
   def run(self):
+    self.initialize()
     end_time = (
       self.config.SIMULATION_DAYS * self.config.MINUTES_PER_DAY
       - self.config.WORK_START

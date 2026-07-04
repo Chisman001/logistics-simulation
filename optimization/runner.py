@@ -1,5 +1,4 @@
 from copy import deepcopy
-from logging import config
 
 from config import Config
 from engine.simulation import Simulator

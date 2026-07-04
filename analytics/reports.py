@@ -68,14 +68,5 @@ class Report:
     print(f"Safety Window: {self.config.SAFETY_WINDOW} min")
 
     print()
-    print("=" * 40)
-    print("Baseline Results")
-    print("=" * 40)
-
-    print(f"Completed Deliveries: {self.statistics.completed_deliveries}")
-    print(f"Supply Operations: {self.statistics.supply_operations}")
-    print(f"Consumer Downtime: {self.statistics.total_consumer_downtime}")
-    print(f"Safety Violations: {self.statistics.safety_violations}")
-    print(f"Average Tank Wait: {self.statistics.average_tank_wait():.2f}")
-    print(f"Average Empty Tank Wait: {self.statistics.average_empty_tank_wait():.2f}")
-    print(f"Average Cycle Time: {self.statistics.average_cycle_time():.2f}")
+    print("This configuration is used as the baseline")
+    print("for future optimization comparisons.")
