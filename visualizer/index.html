@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Simulation Replay</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>Logistics Simulation Replay</h1>
+
+<div id="summary"></div>
+
+<div id="controls">
+
+    <button id="prev">◀ Previous</button>
+    <button id="play">▶ Play</button>
+    <button id="pause">⏸ Pause</button>
+    <button id="next">Next ▶</button>
+
+</div>
+
+<div id="world">
+
+    <div class="station">
+
+        <h2>Point A</h2>
+
+        <div id="pointA"></div>
+
+    </div>
+
+    <div class="road">
+
+        <h2>Road</h2>
+
+        <div id="road"></div>
+
+    </div>
+
+    <div class="station">
+
+        <h2>Point C</h2>
+
+        <div id="pointC"></div>
+
+    </div>
+
+</div>
+
+<h2>Current Event</h2>
+
+<div id="currentEvent"></div>
+
+<script src="parser.js"></script>
+<script src="renderer.js"></script>
+<script src="player.js"></script>
+<script src="app.js"></script>
+
+</body>
+
+</html>
