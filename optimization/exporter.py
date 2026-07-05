@@ -11,12 +11,12 @@ class OptimizationExporter:
     ):
 
         path = Path(filename)
-
-        with path.open(
-            "w",
-            newline="",
-            encoding="utf-8",
-        ) as file:
+        try: 
+          with path.open(
+              "w",
+              newline="",
+              encoding="utf-8",
+          ) as file:
 
             writer = csv.writer(file)
 
@@ -24,11 +24,17 @@ class OptimizationExporter:
 
             for result in results:
                 self._write_result(writer, result)
+        
+        except PermissionError:
+          print(
+              "Could not write optimization_results.csv.\n"
+              "Please close the file if it is open in Excel or another program."
+          )
 
         return path
       
     def _write_header(self, writer):
-
+      print("WRITING NEW HEADER")
       writer.writerow([
         "Score",
 

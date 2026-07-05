@@ -11,7 +11,8 @@ from models.truck_head import TruckHead
 from models.enums import TruckState
 from engine.scheduler import Scheduler
 from analytics.statistics import Statistics
-from optimization.event_exporter import EventExporter
+# from optimization.event_exporter import EventExporter
+from engine.recorder import SimulationRecorder
 
 class Simulator:
   def __init__(self, config=None):
@@ -36,6 +37,7 @@ class Simulator:
     self.supply_gap_started_at = None
     
     self.event_history = []
+    self.recorder = SimulationRecorder()
 
   def create_tanks(self):
     self.tanks = {}
@@ -158,6 +160,10 @@ class Simulator:
         f"state={tank.state.name}, "
         f"truck={tank.current_truck_head}"
       )
+    self.recorder.record_event(
+      self,
+      event,
+    )
     self.assert_consistent_state()
 
     self.record_event(event)
@@ -196,11 +202,12 @@ class Simulator:
             validator.print_supply_timeline()
 
     report = Report(metrics, self.config, validation_result)
-    exporter = EventExporter()
-    exporter.export(self.event_history)
+    # exporter = EventExporter()
+    # exporter.export(self.event_history)
     if self.config.PRINT_REPORTS:
       report.print_summary()
       report.print_baseline_report()
+    self.recorder.close()
 
   def handle_tank_fill_started(self, event):
     tank = self.tanks[event.tank_id]
@@ -762,6 +769,7 @@ class Simulator:
         f"Tank {tank.id} and Truck {truck.id} disagree about their link."
       )
   def record_event(self, event):
+    print("NEW RECORDER RUNNING")
 
     truck_state = ""
     truck_location = ""
