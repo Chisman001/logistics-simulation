@@ -11,7 +11,7 @@ from models.truck_head import TruckHead
 from models.enums import TruckState
 from engine.scheduler import Scheduler
 from analytics.statistics import Statistics
-
+from optimization.event_exporter import EventExporter
 
 class Simulator:
   def __init__(self, config=None):
@@ -34,6 +34,8 @@ class Simulator:
     self.waiting_tanks_at_c = []
     self.pending_supply_tank = None
     self.supply_gap_started_at = None
+    
+    self.event_history = []
 
   def create_tanks(self):
     self.tanks = {}
@@ -157,6 +159,9 @@ class Simulator:
         f"truck={tank.current_truck_head}"
       )
     self.assert_consistent_state()
+
+    self.record_event(event)
+    
   def run(self):
     self.initialize()
     print("Events in queue:", len(self.event_queue.events))
@@ -191,7 +196,8 @@ class Simulator:
             validator.print_supply_timeline()
 
     report = Report(metrics, self.config, validation_result)
-
+    exporter = EventExporter()
+    exporter.export(self.event_history)
     if self.config.PRINT_REPORTS:
       report.print_summary()
       report.print_baseline_report()
@@ -755,3 +761,32 @@ class Simulator:
       assert truck.current_tank == tank.id, (
         f"Tank {tank.id} and Truck {truck.id} disagree about their link."
       )
+  def record_event(self, event):
+
+    truck_state = ""
+    truck_location = ""
+
+    if event.truck_head_id is not None:
+        truck = self.truck_heads[event.truck_head_id]
+        truck_state = truck.state.name
+        truck_location = truck.location.name
+
+    tank_state = ""
+    tank_location = ""
+
+    if event.tank_id is not None:
+        tank = self.tanks[event.tank_id]
+        tank_state = tank.state.name
+        tank_location = tank.location.name
+
+    self.event_history.append([
+        event.simulation_time,
+        self.clock.get_day(),
+        event.event_type.name,
+        event.truck_head_id,
+        event.tank_id,
+        truck_state,
+        tank_state,
+        truck_location,
+        tank_location,
+    ])  

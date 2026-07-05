@@ -35,6 +35,25 @@ def main():
 
     print(f"Average Tank Wait: {tank['Average Tank Wait']:.2f}")
     print(f"Average Cycle Time: {tank['Average Cycle Time']:.2f}")
+    
+    print()
+    print("=" * 70)
+    print("Top 10 Configurations")
+    print("=" * 70)
+
+    for i, result in enumerate(results[:10], start=1):
+
+        s = result.scenario
+
+        print(
+            f"{i:2}. "
+            f"Score={result.score:.2f} | "
+            f"Tanks={s.num_tanks} | "
+            f"Trucks={s.num_truck_heads} | "
+            f"Travel={s.travel_time} | "
+            f"Fill={s.fill_time} | "
+            f"Safety={s.safety_window}"
+        )
 
 if __name__ == "__main__":
     main()

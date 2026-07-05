@@ -84,7 +84,7 @@ class Metrics:
   
   def safety_violations(self):
     return self.statistics.safety_violations
-  
+
   def total_safety_delay(self):
     return self.statistics.total_safety_delay
 
