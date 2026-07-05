@@ -259,11 +259,38 @@ class Simulator:
       self.log(f"Tank {tank.id} pre-positioned at Point C for the next handover.")
 
     self.promote_next_waiting_tank()
+    
+  def _can_link_truck_tank(self, truck, tank):
+    if (
+        tank.current_truck_head is not None
+        and tank.current_truck_head != truck.id
+    ):
+        return False
+
+    if (
+        truck.current_tank is not None
+        and truck.current_tank != tank.id
+    ):
+        return False
+
+    return True
 
   def handle_truck_departed(self, event):
 
     truck = self.truck_heads[event.truck_head_id]
     tank = self.tanks[event.tank_id]
+
+    if tank.state != TankState.READY_AT_A:
+        self.log(f"Ignoring departure of Tank {tank.id} because it is not READY_AT_A.")
+        return
+
+    if truck.state != TruckState.IDLE_AT_A:
+        self.log(f"Ignoring departure of Truck {truck.id} because it is not IDLE_AT_A.")
+        return
+
+    if not self._can_link_truck_tank(truck, tank):
+        self.log(f"Ignoring departure of Truck {truck.id} and Tank {tank.id} because they cannot be linked.")
+        return
 
     truck.state = TruckState.DRIVING_TO_C
     truck.location = Location.IN_TRANSIT_TO_C
@@ -564,6 +591,18 @@ class Simulator:
 
     truck = self.truck_heads[event.truck_head_id]
     tank = self.tanks[event.tank_id]
+
+    if tank.state != TankState.EMPTY_AT_C:
+        self.log(f"Ignoring departure of Tank {tank.id} because it is not EMPTY_AT_C.")
+        return
+
+    if truck.state != TruckState.IDLE_AT_C:
+        self.log(f"Ignoring departure of Truck {truck.id} because it is not IDLE_AT_C.")
+        return
+
+    if not self._can_link_truck_tank(truck, tank):
+        self.log(f"Ignoring departure of Truck {truck.id} and Tank {tank.id} because they cannot be linked.")
+        return
 
     truck.state = TruckState.DRIVING_TO_A
     truck.location = Location.IN_TRANSIT_TO_A

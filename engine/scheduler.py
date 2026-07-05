@@ -1,7 +1,7 @@
 from collections import deque
 
 from engine.event import Event
-from models.enums import EventType
+from models.enums import EventType, TruckState, TankState
 
 class Scheduler:
   def __init__(self, simulator):
@@ -148,6 +148,23 @@ class Scheduler:
     self.simulator.event_queue.add_event(event)
     self.dispatch_ready_scheduled = True
 
+  def _can_dispatch_pair(self, tank, truck):
+    return (
+        tank.state == TankState.READY_AT_A
+        and truck.state == TruckState.IDLE_AT_A
+        and truck.current_tank is None
+        and tank.current_truck_head is None
+    )
+
+
+  def _can_return_pair(self, tank, truck):
+      return (
+          tank.state == TankState.EMPTY_AT_C
+          and truck.state == TruckState.IDLE_AT_C
+          and truck.current_tank is None
+          and tank.current_truck_head is None
+      )
+
   def try_dispatch(self):
 
     if not self.waiting_full_tanks:
@@ -178,15 +195,32 @@ class Scheduler:
       return
 
     while (
-        self.waiting_full_tanks
-        and self.available_trucks_at_a
-        and self.can_dispatch_now()
+    self.waiting_full_tanks
+    and self.available_trucks_at_a
+    and self.can_dispatch_now()
     ):
-      tank_id = self.waiting_full_tanks.popleft()
-      truck_id = self.available_trucks_at_a.popleft()
+
+      tank_id = self.waiting_full_tanks[0]
+      truck_id = self.available_trucks_at_a[0]
 
       tank = self.simulator.tanks[tank_id]
       truck = self.simulator.truck_heads[truck_id]
+
+      if not self._can_dispatch_pair(tank, truck):
+
+          if tank.state != TankState.READY_AT_A:
+              self.waiting_full_tanks.popleft()
+
+          elif truck.state != TruckState.IDLE_AT_A:
+              self.available_trucks_at_a.popleft()
+
+          else:
+              self.waiting_full_tanks.popleft()
+
+          continue
+
+      self.waiting_full_tanks.popleft()
+      self.available_trucks_at_a.popleft()
 
       self.schedule_departure(tank, truck)
 
@@ -208,11 +242,27 @@ class Scheduler:
         and self.available_trucks_at_c
         and self.can_dispatch_now()
     ):
-      tank_id = self.waiting_empty_tanks.popleft()
-      truck_id = self.available_trucks_at_c.popleft()
+      tank_id = self.waiting_empty_tanks[0]
+      truck_id = self.available_trucks_at_c[0]
 
       tank = self.simulator.tanks[tank_id]
       truck = self.simulator.truck_heads[truck_id]
+
+      if not self._can_return_pair(tank, truck):
+
+          if tank.state != TankState.EMPTY_AT_C:
+              self.waiting_empty_tanks.popleft()
+
+          elif truck.state != TruckState.IDLE_AT_C:
+              self.available_trucks_at_c.popleft()
+
+          else:
+              self.waiting_empty_tanks.popleft()
+
+          continue
+
+      self.waiting_empty_tanks.popleft()
+      self.available_trucks_at_c.popleft()
 
       self.schedule_return(tank, truck)
   def reset(self):
