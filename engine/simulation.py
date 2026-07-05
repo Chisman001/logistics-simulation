@@ -198,6 +198,12 @@ class Simulator:
 
   def handle_tank_fill_started(self, event):
     tank = self.tanks[event.tank_id]
+    # Ignore stale or duplicate fill-start events
+    if tank.state not in (
+        TankState.EMPTY_AT_A,
+        TankState.FILLING,
+    ):
+        return
 
     tank.state = TankState.FILLING
     tank.fill_started_at = event.simulation_time
@@ -217,6 +223,9 @@ class Simulator:
 
   def handle_tank_fill_completed(self, event):
     tank = self.tanks[event.tank_id]
+    # Ignore duplicate or stale completion events
+    if tank.state != TankState.FILLING:
+        return
     tank.state = TankState.READY_AT_A
     tank.fill_completed_at = event.simulation_time
     self.scheduler.tank_ready(tank)
