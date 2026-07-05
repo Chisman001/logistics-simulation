@@ -66,4 +66,6 @@ class SimulationRunner:
             scenario.safety_window
         )
 
+        config.PRINT_REPORTS = False
+        config.PRINT_EVENTS = False
         return config

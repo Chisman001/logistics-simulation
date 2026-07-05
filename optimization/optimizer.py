@@ -21,6 +21,9 @@ class Optimizer:
       )
 
       statistics = simulator.statistics
+      print("Completed deliveries:", statistics.completed_deliveries)
+      print("Supply operations:", statistics.supply_operations)
+      print("Downtime:", statistics.total_consumer_downtime)
       metrics = Metrics(statistics)
 
       score = self.objective.calculate_score(
@@ -33,4 +36,5 @@ class Optimizer:
           scenario=scenario,
           statistics=statistics,
           score=score,
+          metrics=metrics,
       )

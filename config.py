@@ -29,3 +29,7 @@ class Config:
 
   # Time
   MINUTES_PER_DAY = 24 * 60
+  
+  # Reporting
+  PRINT_REPORTS = True
+  PRINT_EVENTS = True

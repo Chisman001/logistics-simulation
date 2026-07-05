@@ -59,34 +59,58 @@ class Simulator:
       self.truck_heads[i] = truck_head
 
   def initialize(self):
-    print("Initializing simulation...")
+    self.statistics = Statistics()
+    self.event_queue = EventQueue()
+
+    self.active_supply_tank = None
+    self.waiting_tanks_at_c = []
+    self.pending_supply_tank = None
+    self.supply_gap_started_at = None
+
+    self.scheduler.reset()
+    if self.config.PRINT_EVENTS:
+        print("Initializing simulation...")
+
     self.create_tanks()
     self.create_truck_heads()
-    print(f"Created {len(self.tanks)} tanks.")
-    print(f"Created {len(self.truck_heads)} truck heads.")
-    print("Simulation ready.")
+
+    if self.config.PRINT_EVENTS:
+        print(f"Created {len(self.tanks)} tanks.")
+        print(f"Created {len(self.truck_heads)} truck heads.")
+        print("Simulation ready.")
+
     for truck in self.truck_heads.values():
-      self.scheduler.truck_available_at_a(truck)
+        self.scheduler.truck_available_at_a(truck)
+
     self.scheduler.schedule_initial_events()
 
   def log(self, message):
+    if not self.config.PRINT_EVENTS:
+        return
+
     day = self.clock.get_day()
     time = self.clock.get_time()
 
     if day != self.last_log_day:
-      print()
-      print(f"========== Day {day} ==========")
-      self.last_log_day = day
-      self.last_log_time = None
+        print()
+        print(f"========== Day {day} ==========")
+        self.last_log_day = day
+        self.last_log_time = None
 
     if time != self.last_log_time:
-      print()
-      print(time)
-      self.last_log_time = time
+        print()
+        print(time)
+        self.last_log_time = time
 
     print(f"    {message}")
 
   def process_event(self, event):
+    print(
+      f"Processing {event.event_type.name} "
+      f"Truck={event.truck_head_id} "
+      f"Tank={event.tank_id} "
+      f"Time={event.simulation_time}"
+    )
     self.clock.simulation_time = event.simulation_time
 
     self.log(event.description)
@@ -119,10 +143,23 @@ class Simulator:
 
     elif event.event_type == EventType.DISPATCH_READY:
       self.handle_dispatch_ready(event)
+    for truck in self.truck_heads.values():
+      print(
+        f"Truck {truck.id}: "
+        f"state={truck.state.name}, "
+        f"tank={truck.current_tank}"
+      )
 
+    for tank in self.tanks.values():
+      print(
+        f"Tank {tank.id}: "
+        f"state={tank.state.name}, "
+        f"truck={tank.current_truck_head}"
+      )
     self.assert_consistent_state()
   def run(self):
     self.initialize()
+    print("Events in queue:", len(self.event_queue.events))
     end_time = (
       self.config.SIMULATION_DAYS * self.config.MINUTES_PER_DAY
       - self.config.WORK_START
@@ -144,18 +181,20 @@ class Simulator:
     if self.config.VALIDATE_ON_COMPLETE:
       validator = SimulationValidator(self.statistics, self.config)
       validation_result = validator.validate()
-      validator.print_report()
-      if (
-          self.config.PRINT_SUPPLY_TIMELINE
-          or self.config.SIMULATION_DAYS <= 2
-      ):
-        validator.print_supply_timeline()
+    if self.config.PRINT_REPORTS:
+        validator.print_report()
+
+        if (
+            self.config.PRINT_SUPPLY_TIMELINE
+            or self.config.SIMULATION_DAYS <= 2
+        ):
+            validator.print_supply_timeline()
 
     report = Report(metrics, self.config, validation_result)
 
-    report.print_summary()
-
-    report.print_baseline_report()
+    if self.config.PRINT_REPORTS:
+      report.print_summary()
+      report.print_baseline_report()
 
   def handle_tank_fill_started(self, event):
     tank = self.tanks[event.tank_id]
@@ -640,7 +679,15 @@ class Simulator:
 
       tank = self.tanks[truck.current_tank]
       assert tank.current_truck_head == truck.id, (
-        f"Truck {truck.id} and Tank {tank.id} disagree about their link."
+        f"""
+      Truck {truck.id} thinks it has Tank {truck.current_tank}
+      Tank {tank.id} thinks it is on Truck {tank.current_truck_head}
+
+      Truck state: {truck.state}
+      Tank state: {tank.state}
+      Truck location: {truck.location}
+      Tank location: {tank.location}
+      """
       )
 
     for tank in self.tanks.values():

@@ -215,7 +215,14 @@ class Scheduler:
       truck = self.simulator.truck_heads[truck_id]
 
       self.schedule_return(tank, truck)
+  def reset(self):
+    self.waiting_full_tanks.clear()
+    self.waiting_empty_tanks.clear()
+    self.available_trucks_at_a.clear()
+    self.available_trucks_at_c.clear()
 
+    self.workday_start_scheduled = False
+    self.dispatch_ready_scheduled = False   
   def schedule_return(self, tank, truck):
 
     event = Event(
@@ -226,11 +233,10 @@ class Scheduler:
         description=(
             f"Truck {truck.id} departed Point C "
             f"with empty Tank {tank.id}."
-        )
+        )        
     )
 
     self.simulator.event_queue.add_event(event)
-
   def schedule_next_workday(self):
 
     if self.workday_start_scheduled:
