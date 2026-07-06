@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Simulation Replay</title>
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/styles.css') }}"
+>
+</head>
+
+<body>
+
+<div id="app">
+
+    <!-- =========================
+         LEFT SIDEBAR
+    ========================== -->
+
+    <aside id="sidebar">
+
+        <h1>🚛 Logistics Simulator</h1>
+
+        <div class="panel">
+
+            <h2>Simulation Setup</h2>
+
+            <div class="setupRow">
+                <label for="truckCount">Number of Trucks</label>
+                <input
+                    id="truckCount"
+                    type="number"
+                    value="5"
+                    min="1"
+                >
+            </div>
+
+            <div class="setupRow">
+                <label for="tankCount">Number of Tanks</label>
+                <input
+                    id="tankCount"
+                    type="number"
+                    value="6"
+                    min="1"
+                >
+            </div>
+
+            <div class="setupRow">
+                <label for="simulationDays">Simulation Days</label>
+                <input
+                    id="simulationDays"
+                    type="number"
+                    value="30"
+                    min="1"
+                >
+            </div>
+
+            <button id="runSimulation">
+                ▶ Run Simulation
+            </button>
+            <button id="loadReplay">
+              📂 Load Replay
+          </button>
+
+        </div>
+
+        <div class="panel">
+
+            <h2>Simulation Summary</h2>
+
+            <div id="summary"></div>
+
+        </div>
+
+        <div class="panel">
+
+            <h2>Playback Controls</h2>
+
+            <div class="controls">
+
+                <button id="previous">⏮</button>
+
+                <button id="play">▶</button>
+
+                <button id="pause">⏸</button>
+
+                <button id="next">⏭</button>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+    <!-- =========================
+         MAIN SIMULATION AREA
+    ========================== -->
+
+    <main id="simulationArea">
+
+        <canvas
+            id="simulationCanvas"
+            width="1200"
+            height="650">
+        </canvas>
+
+    </main>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/layout.js') }}"></script>
+<script src="{{ url_for('static', filename='js/animation.js') }}"></script>
+<script src="{{ url_for('static', filename='js/parser.js') }}"></script>
+<script src="{{ url_for('static', filename='js/state.js') }}"></script>
+<script src="{{ url_for('static', filename='js/player.js') }}"></script>
+<script src="{{ url_for('static', filename='js/canvasRenderer.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+</body>

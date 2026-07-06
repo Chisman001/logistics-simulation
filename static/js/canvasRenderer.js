@@ -15,7 +15,7 @@ class CanvasRenderer {
 
         this.drawBackground(state);
 
-        this.drawMap();
+        this.drawMap(state);
 
         this.drawTrucks(state.trucks);
 
@@ -40,25 +40,39 @@ class CanvasRenderer {
 
     }
 
-    drawMap() {
+    drawMap(state) {
 
-        const ctx = this.ctx;
+    const ctx = this.ctx;
 
-        ctx.font = "20px Arial";
+    const START_HOUR = 6;
 
-        ctx.fillText("Point A", 60, 60);
+    const hour = this.getHour(state);
 
-        ctx.fillText("Road", 560, 60);
+    ctx.fillStyle =
+        (hour >= 6 && hour < 18)
+            ? "black"
+            : "white";
 
-        ctx.fillText("Point C", 980, 60);
+    ctx.font = "20px Arial";
 
-        ctx.strokeStyle = "#555";
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(170,250);
-        ctx.lineTo(1000,250);
-                          ctx.stroke();
+    ctx.fillText("Point A", 60, 60);
 
+    ctx.fillText("Road", 560, 60);
+
+    ctx.fillText("Point C", 980, 60);
+
+    ctx.strokeStyle = "#555";
+    ctx.lineWidth = 6;
+
+    ctx.beginPath();
+    ctx.moveTo(170, 250);
+    ctx.lineTo(1000, 250);
+    ctx.stroke();
+}
+
+    getHour(state) {
+        const START_HOUR = 6;
+        return (START_HOUR + Math.floor(state.time / 60)) % 24;
     }
 
     update(state) {
@@ -178,7 +192,9 @@ class CanvasRenderer {
 
         const ctx = this.ctx;
 
-        const hour = Math.floor((state.time % 1440) / 60);
+        const START_HOUR = 6;
+
+        const hour = this.getHour(state);
 
         ctx.fillStyle =
             (hour >= 6 && hour < 18)
@@ -214,8 +230,7 @@ class CanvasRenderer {
     // Convert simulation minutes into an hour (0-23)
     const START_HOUR = 6;
 
-    const hour =
-        (START_HOUR + Math.floor(state.time / 60)) % 24;
+    const hour = this.getHour(state);
     if (hour >= 6 && hour < 18) {
 
         // Day

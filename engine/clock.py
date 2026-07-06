@@ -2,9 +2,9 @@ from config import Config
 
 class SimulationClock:
 
-  def __init__(self):
+  def __init__(self, config):
     self.simulation_time = 0
-    self.config = Config
+    self.config = config
 
   def advance(self, minutes: int):
     self.simulation_time += minutes
@@ -15,11 +15,11 @@ class SimulationClock:
     return (total_minutes // self.config.MINUTES_PER_DAY) + 1
 
   def get_time(self):
-    minutes_since_day_start = self.simulation_time % Config.MINUTES_PER_DAY
+    minutes_since_day_start = self.simulation_time % self.config.MINUTES_PER_DAY
 
-    total_minutes = Config.WORK_START + minutes_since_day_start
+    total_minutes = self.config.WORK_START + minutes_since_day_start
 
-    total_minutes %= Config.MINUTES_PER_DAY
+    total_minutes %= self.config.MINUTES_PER_DAY
 
     hours = total_minutes // 60
     minutes = total_minutes % 60
@@ -65,14 +65,27 @@ class SimulationClock:
 
   def next_work_start_time(self):
     return self.simulation_time + self.minutes_until_next_work_start()
-
+  
   @staticmethod
   def format_sim_time(simulation_time: int) -> str:
-    config = Config
-    day = (config.WORK_START + simulation_time) // config.MINUTES_PER_DAY + 1
-    minutes_since_day_start = simulation_time % config.MINUTES_PER_DAY
-    total_minutes = config.WORK_START + minutes_since_day_start
+
+    config = Config()
+
+    day = (
+        config.WORK_START + simulation_time
+    ) // config.MINUTES_PER_DAY + 1
+
+    minutes_since_day_start = (
+        simulation_time % config.MINUTES_PER_DAY
+    )
+
+    total_minutes = (
+        config.WORK_START + minutes_since_day_start
+    )
+
     total_minutes %= config.MINUTES_PER_DAY
+
     hours = total_minutes // 60
     minutes = total_minutes % 60
+
     return f"Day {day}  {hours:02d}:{minutes:02d}"

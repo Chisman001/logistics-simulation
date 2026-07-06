@@ -1,59 +1,39 @@
-from optimization.search import Search
+from flask import Flask, render_template, request, jsonify
+
+from config import Config
+from engine.simulation import Simulator
+import shutil
+app = Flask(__name__)
 
 
-def main():
+@app.route("/")
+def index():
+    return render_template("index.html")
 
-    search = Search()
 
-    best, results = search.search()
+@app.route("/simulate", methods=["POST"])
+def simulate():
 
-    print()
-    print("=" * 40)
-    print("Optimization Result")
-    print("=" * 40)
+    data = request.get_json()
 
-    print(f"Scenarios Tested: {len(results)}")
-    print(f"Best Score: {best.score}")
-    scenario = best.scenario
+    config = Config()
 
-    print()
-    print("Best Configuration")
-    print("-------------------")
-    print(f"Tanks: {scenario.num_tanks}")
-    print(f"Truck Heads: {scenario.num_truck_heads}")
-    print(f"Tank Capacity: {scenario.tank_capacity}")
-    print(f"Travel Time: {scenario.travel_time}")
-    print(f"Fill Time: {scenario.fill_time}")
-    print(f"Safety Window: {scenario.safety_window}")
-    summary = best.metrics.simulation_summary()
+    config.NUM_TRUCK_HEADS = data["trucks"]
+    config.NUM_TANKS = data["tanks"]
+    config.SIMULATION_DAYS = data["days"]
 
-    print(f"Deliveries: {summary['Completed Deliveries']}")
-    print(f"Dispatches: {summary['Dispatches']}")
-    print(f"Returns: {summary['Returns']}")
-    
-    tank = best.metrics.tank_performance()
+    simulator = Simulator(config)
 
-    print(f"Average Tank Wait: {tank['Average Tank Wait']:.2f}")
-    print(f"Average Cycle Time: {tank['Average Cycle Time']:.2f}")
-    
-    print()
-    print("=" * 70)
-    print("Top 10 Configurations")
-    print("=" * 70)
-
-    for i, result in enumerate(results[:10], start=1):
-
-        s = result.scenario
-
-        print(
-            f"{i:2}. "
-            f"Score={result.score:.2f} | "
-            f"Tanks={s.num_tanks} | "
-            f"Trucks={s.num_truck_heads} | "
-            f"Travel={s.travel_time} | "
-            f"Fill={s.fill_time} | "
-            f"Safety={s.safety_window}"
+    simulator.run()
+    shutil.copy(
+        "simulation_events.csv",
+        "static/simulation_events.csv"
         )
 
+    return jsonify({
+        "success": True
+    })
+
+
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)

@@ -1,0 +1,275 @@
+/* ==========================================================
+   GLOBAL STYLES
+========================================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    font-family:Arial, Helvetica, sans-serif;
+
+    background:#eef2f7;
+
+    overflow:hidden;
+
+}
+
+/* ==========================================================
+   MAIN LAYOUT
+========================================================== */
+
+#app{
+
+    display:flex;
+
+    width:100vw;
+
+    height:100vh;
+
+}
+
+/* ==========================================================
+   SIDEBAR
+========================================================== */
+
+#sidebar{
+
+    width:340px;
+
+    background:white;
+
+    padding:25px;
+
+    overflow-y:auto;
+
+    box-shadow:4px 0 12px rgba(0,0,0,.12);
+
+}
+
+#sidebar h1{
+
+    text-align:center;
+
+    margin-bottom:30px;
+
+    color:#1f2937;
+
+}
+
+.panel{
+
+    margin-bottom:35px;
+
+}
+
+.panel h2{
+
+    margin-bottom:18px;
+
+    color:#374151;
+
+    font-size:20px;
+
+    border-bottom:2px solid #e5e7eb;
+
+    padding-bottom:8px;
+
+}
+
+/* ==========================================================
+   SETUP FORM
+========================================================== */
+
+.setupRow{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:18px;
+
+}
+
+.setupRow label{
+
+    font-weight:bold;
+
+    color:#374151;
+
+}
+
+.setupRow input{
+
+    width:90px;
+
+    padding:8px;
+
+    text-align:center;
+
+    font-size:16px;
+
+    border:1px solid #cbd5e1;
+
+    border-radius:6px;
+
+}
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+
+button{
+
+    border:none;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    padding:10px 16px;
+
+    font-size:15px;
+
+    transition:.2s;
+
+}
+
+button:hover{
+
+    transform:translateY(-2px);
+
+}
+
+#runSimulation{
+
+    width:100%;
+
+    margin-top:10px;
+
+    background:#2563eb;
+
+    color:white;
+
+}
+
+#runSimulation:hover{
+
+    background:#1d4ed8;
+
+}
+
+.controls{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    gap:10px;
+
+}
+
+.controls button{
+
+    flex:1;
+
+    background:#374151;
+
+    color:white;
+
+}
+
+.controls button:hover{
+
+    background:#1f2937;
+
+}
+
+/* ==========================================================
+   SUMMARY
+========================================================== */
+
+#summary{
+
+    line-height:1.8;
+
+    font-size:15px;
+
+    color:#374151;
+
+}
+
+/* ==========================================================
+   SIMULATION AREA
+========================================================== */
+
+#simulationArea{
+
+    flex:1;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:30px;
+
+}
+
+#loadReplay{
+
+    width:100%;
+
+    margin-top:10px;
+
+    background:#16a34a;
+
+    color:white;
+
+}
+
+#loadReplay:hover{
+
+    background:#15803d;
+
+}
+
+/* ==========================================================
+   CANVAS
+========================================================== */
+
+#simulationCanvas{
+
+    background:white;
+
+    border-radius:15px;
+
+    border:2px solid #cbd5e1;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+
+}
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#cbd5e1;
+
+    border-radius:8px;
+
+}

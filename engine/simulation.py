@@ -22,7 +22,7 @@ class Simulator:
     self.statistics = Statistics()
     self.scheduler = Scheduler(self)
 
-    self.clock = SimulationClock()
+    self.clock = SimulationClock(self.config)
 
     self.tanks = {}
 
@@ -169,6 +169,11 @@ class Simulator:
     self.record_event(event)
     
   def run(self):
+    print("========== CONFIG ==========")
+    print("Trucks:", self.config.NUM_TRUCK_HEADS)
+    print("Tanks :", self.config.NUM_TANKS)
+    print("Days  :", self.config.SIMULATION_DAYS)
+    print("============================")
     self.initialize()
     print("Events in queue:", len(self.event_queue.events))
     end_time = (

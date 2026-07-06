@@ -1,6 +1,6 @@
 async function loadSimulation(){
 
-    const response = await fetch('../exports/simulation_events.csv');
+    const response = await fetch('/static/simulation_events.csv');
 
     const text = await response.text();
 

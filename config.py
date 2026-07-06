@@ -1,35 +1,41 @@
-
+import json
 class Config:
-  # Tank
-  TANK_CAPACITY = 520
-  TANK_DURATION = 8 * 60      # minutes
+  def __init__(self):
 
-  # Filling
-  FILL_TIME = 2 * 60
+        with open("config.json") as file:
 
-  # Travel
-  TRAVEL_TIME = 90
+            settings = json.load(file)
 
-  # Safety
-  SAFETY_WINDOW = 60
+        self.NUM_TRUCK_HEADS = settings["trucks"]
 
-  # Working hours
-  WORK_START = 6 * 60
-  WORK_END = 18 * 60
+        self.NUM_TANKS = settings["tanks"]
 
-  # Resources   
-  NUM_TANKS = 4
-  NUM_TRUCK_HEADS = 2
+        self.SIMULATION_DAYS = settings["days"]
+        # Tank
+        self.TANK_CAPACITY = 520
+        self.TANK_DURATION = 8 * 60      # minutes
 
-  # Simulation
-  SIMULATION_DAYS = 30
-  DEBUG_HANDOVER = False
-  PRINT_SUPPLY_TIMELINE = False
-  VALIDATE_ON_COMPLETE = True
+        # Filling
+        self.FILL_TIME = 2 * 60
 
-  # Time
-  MINUTES_PER_DAY = 24 * 60
-  
-  # Reporting
-  PRINT_REPORTS = True
-  PRINT_EVENTS = True
+        # Travel
+        self.TRAVEL_TIME = 90
+
+        # Safety
+        self.SAFETY_WINDOW = 60
+
+        # Working hours
+        self.WORK_START = 6 * 60
+        self.WORK_END = 18 * 60
+
+        # Simulation
+        self.DEBUG_HANDOVER = False
+        self.PRINT_SUPPLY_TIMELINE = False
+        self.VALIDATE_ON_COMPLETE = True
+
+        # Time
+        self.MINUTES_PER_DAY = 24 * 60
+        
+        # Reporting
+        self.PRINT_REPORTS = True
+        self.PRINT_EVENTS = True
