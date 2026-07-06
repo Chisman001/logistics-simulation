@@ -51,12 +51,18 @@ class Renderer {
         for(const truck of trucks){
             console.log(truck);
             const div = document.createElement("div");
+            div.style.background = this.stateColor(truck.state);
 
             div.className = "truck";
 
             div.innerHTML = `
-            🚛
-            <div>Truck ${truck.id}</div>
+            <div class="title">🚛 Truck ${truck.id}</div>
+
+            <div class="status">${this.formatState(truck.state)}</div>
+
+            <div class="small">
+            Tank: ${truck.tank}
+            </div>
             `;
 
             switch(truck.location){
@@ -82,12 +88,18 @@ class Renderer {
         for(const tank of tanks){
 
             const div = document.createElement("div");
+            div.style.background = this.stateColor(tank.state);
 
             div.className = "tank";
 
             div.innerHTML = `
-            🛢
-            <div>Tank ${tank.id}</div>
+            <div class="title">🛢 Tank ${tank.id}</div>
+
+            <div class="status">${this.formatState(tank.state)}</div>
+
+            <div class="small">
+            Truck: ${tank.truck}
+            </div>
             `;
 
             switch(tank.location){
@@ -105,6 +117,42 @@ class Renderer {
             }
 
         }
+
+    }
+
+    stateColor(state) {
+
+        if (state.includes("IDLE"))
+            return "#22c55e";
+
+        if (state.includes("FILL"))
+            return "#3b82f6";
+
+        if (state.includes("DRIVING"))
+            return "#f59e0b";
+
+        if (state.includes("SUPPLY"))
+            return "#ef4444";
+
+        if (state.includes("EMPTY"))
+            return "#6b7280";
+
+        if (state.includes("RETURN"))
+            return "#8b5cf6";
+
+        if (state.includes("WAIT"))
+            return "#06b6d4";
+
+        return "#374151";
+
+    }
+
+    formatState(state) {
+
+        return state
+            .replaceAll("_", " ")
+            .toLowerCase()
+            .replace(/\b\w/g, c => c.toUpperCase());
 
     }
 

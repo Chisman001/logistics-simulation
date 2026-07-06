@@ -21,41 +21,12 @@
 
 <div id="world">
 
-    <div class="location">
+    <canvas
+        id="simulationCanvas"
+        width="1200"
+        height="500">
+    </canvas>
 
-      <h2>Point A</h2>
-
-      <h3>Truck Heads</h3>
-      <div id="pointATrucks" class="container"></div>
-
-      <h3>Tanks</h3>
-      <div id="pointATanks" class="container"></div>
-
-    </div>
-
-    <div class="location">
-
-      <h2>Road</h2>
-
-      <h3>Truck Heads</h3>
-      <div id="roadTrucks" class="container"></div>
-
-      <h3>Tanks</h3>
-      <div id="roadTanks" class="container"></div>
-
-    </div>
-
-    <div class="location">
-
-      <h2>Point C</h2>
-
-      <h3>Truck Heads</h3>
-      <div id="pointCTrucks" class="container"></div>
-
-      <h3>Tanks</h3>
-      <div id="pointCTanks" class="container"></div>
-
-    </div>
 </div>
 
 <h2>Current Event</h2>
@@ -63,7 +34,10 @@
 <div id="currentEvent"></div>
 
 <script src="parser.js"></script>
+<script src="layout.js"></script>
+<script src="animation.js"></script>
 <script src="state.js"></script>
+<script src="canvasRenderer.js"></script>
 <script src="renderer.js"></script>
 <script src="player.js"></script>
 <script src="app.js"></script>

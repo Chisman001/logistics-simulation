@@ -24,8 +24,6 @@ class Player {
 
         this.state.load(this.currentEvent());
 
-        this.renderer.render(this.state);
-
     }
 
     nextFrame() {
