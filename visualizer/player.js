@@ -7,6 +7,8 @@ class Player {
         this.currentFrame = 0;
         this.events = [];
         this.playing = false;
+        this.lastUpdate = 0;
+                this.eventInterval = 500; // milliseconds (2 events per second)
         this.timer = null;
     }
 
@@ -20,7 +22,7 @@ class Player {
         return this.events[this.currentFrame];
     }
 
-    update() {
+    loadCurrentEvent() {
 
         this.state.load(this.currentEvent());
 
@@ -35,9 +37,9 @@ class Player {
 
         this.currentFrame++;
 
-        this.update();
+        this.loadCurrentEvent();
 
-    }
+          }
 
     previousFrame() {
 
@@ -46,22 +48,13 @@ class Player {
 
         this.currentFrame--;
 
-        this.update();
+        this.loadCurrentEvent();
 
     }
 
     play() {
 
-        if (this.playing)
-            return;
-
         this.playing = true;
-
-        this.timer = setInterval(() => {
-
-            this.nextFrame();
-
-        }, 250);
 
     }
 
@@ -69,8 +62,98 @@ class Player {
 
         this.playing = false;
 
-        clearInterval(this.timer);
+    }
+
+    update(currentTime) {
+
+        if (!this.playing)
+            return;
+
+        if (this.currentFrame >= this.events.length - 1) {
+
+            this.stop();
+            return;
+
+        }
+
+        if (currentTime - this.lastUpdate >= this.eventInterval) {
+
+            this.lastUpdate = currentTime;
+
+            this.nextFrame();
+
+        }
 
     }
+
+    finishedMoving() {
+
+        const tolerance = 2;
+
+        for (const truck of Object.values(this.state.trucks)) {
+
+            if (
+                Math.abs(truck.x - truck.targetX) > tolerance ||
+                Math.abs(truck.y - truck.targetY) > tolerance
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+        for (const tank of Object.values(this.state.tanks)) {
+
+            if (
+                Math.abs(tank.x - tank.targetX) > tolerance ||
+                Math.abs(tank.y - tank.targetY) > tolerance
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+        return true;
+
+    }
+
+    hasMovement(nextEvent) {
+
+    for (const truck of Object.values(this.state.trucks)) {
+
+        const key = `Truck ${truck.id}`;
+
+        if (!nextEvent[key])
+            continue;
+
+        const location =
+            nextEvent[key].split("|")[1].trim();
+
+        if (location !== truck.location)
+            return true;
+
+    }
+
+    for (const tank of Object.values(this.state.tanks)) {
+
+        const key = `Tank ${tank.id}`;
+
+        if (!nextEvent[key])
+            continue;
+
+        const location =
+            nextEvent[key].split("|")[1].trim();
+
+        if (location !== tank.location)
+            return true;
+
+    }
+
+    return false;
+
+}
 
 }

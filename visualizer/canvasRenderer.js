@@ -11,8 +11,9 @@ class CanvasRenderer {
     }
 
     render(state) {
-
         this.clear();
+
+        this.drawBackground(state);
 
         this.drawMap();
 
@@ -51,19 +52,18 @@ class CanvasRenderer {
 
         ctx.fillText("Point C", 980, 60);
 
+        ctx.strokeStyle = "#555";
+        ctx.lineWidth = 6;
         ctx.beginPath();
-
         ctx.moveTo(170,250);
-
         ctx.lineTo(1000,250);
-
-        ctx.stroke();
+                          ctx.stroke();
 
     }
 
     update(state) {
 
-        for (const truck of state.trucks) {
+        for (const truck of Object.values(state.trucks)) {
 
             truck.x = Animator.move(
                 truck.x,
@@ -77,7 +77,7 @@ class CanvasRenderer {
 
         }
 
-        for (const tank of state.tanks) {
+        for (const tank of Object.values(state.tanks)) {
 
             tank.x = Animator.move(
                 tank.x,
@@ -93,9 +93,11 @@ class CanvasRenderer {
 
     }
 
-    animate(state) {
+    animate(state, player) {
 
-        const loop = () => {
+        const loop = (time) => {
+
+            player.update(time);
 
             this.update(state);
 
@@ -105,7 +107,7 @@ class CanvasRenderer {
 
         };
 
-        loop();
+        requestAnimationFrame(loop);
 
     }
 
@@ -113,7 +115,7 @@ class CanvasRenderer {
 
         const ctx = this.ctx;
 
-        for (const truck of trucks) {
+        for (const truck of Object.values(trucks)) {
 
             ctx.fillStyle = "#2563eb";
 
@@ -142,7 +144,7 @@ class CanvasRenderer {
 
         const ctx = this.ctx;
 
-        for (const tank of tanks) {
+        for (const tank of Object.values(tanks)) {
 
             ctx.fillStyle = "#16a34a";
 
@@ -176,7 +178,12 @@ class CanvasRenderer {
 
         const ctx = this.ctx;
 
-        ctx.fillStyle = "black";
+        const hour = Math.floor((state.time % 1440) / 60);
+
+        ctx.fillStyle =
+            (hour >= 6 && hour < 18)
+                ? "black"
+                : "white";
 
         ctx.font = "18px Arial";
 
@@ -199,5 +206,35 @@ class CanvasRenderer {
         );
 
     }
+
+    drawBackground(state) {
+
+    const ctx = this.ctx;
+
+    // Convert simulation minutes into an hour (0-23)
+    const START_HOUR = 6;
+
+    const hour =
+        (START_HOUR + Math.floor(state.time / 60)) % 24;
+    if (hour >= 6 && hour < 18) {
+
+        // Day
+        ctx.fillStyle = "#f5f5f5";
+
+    } else {
+
+        // Night
+        ctx.fillStyle = "#1b1b2f";
+
+    }
+
+    ctx.fillRect(
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+    );
+
+}
 
 }

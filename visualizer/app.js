@@ -7,7 +7,7 @@ async function main() {
     const player = new Player(renderer);
 
     player.loadEvents(events);
-    renderer.animate(player.state);
+    renderer.animate(player.state, player);
 
     document.getElementById("play").onclick = () => {
         player.play();

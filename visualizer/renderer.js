@@ -48,7 +48,7 @@ class Renderer {
 
     renderTrucks(trucks, pointATrucks, roadTrucks, pointCTrucks) {
 
-        for(const truck of trucks){
+        for (const truck of Object.values(trucks)) {
             console.log(truck);
             const div = document.createElement("div");
             div.style.background = this.stateColor(truck.state);
@@ -85,7 +85,7 @@ class Renderer {
 
     renderTanks(tanks, pointATanks, roadTanks, pointCTanks){
 
-        for(const tank of tanks){
+        for (const tank of Object.values(tanks)) {
 
             const div = document.createElement("div");
             div.style.background = this.stateColor(tank.state);

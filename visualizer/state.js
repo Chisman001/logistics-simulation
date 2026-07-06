@@ -5,9 +5,8 @@ class WorldState {
         this.time = 0;
         this.day = 1;
         this.event = "";
-
-        this.trucks = [];
-        this.tanks = [];
+        this.trucks = {};
+        this.tanks ={};
 
     }
 
@@ -16,9 +15,6 @@ class WorldState {
     this.time = Number(event.Time);
     this.day = Number(event.Day);
     this.event = event.Event;
-
-    this.trucks = [];
-    this.tanks = [];
 
     const truckCounts = {
         POINT_A: 0,
@@ -49,23 +45,32 @@ class WorldState {
               truckCounts[location]++
           );
 
-          this.trucks.push({
+          const id = parseInt(key.replace("Truck ", ""));
 
-              id: parseInt(key.replace("Truck ", "")),
+            if (!this.trucks[id]) {
 
-              state: parts[0].trim(),
+                this.trucks[id] = {
 
-              location: location,
+                    id: id,
 
-              tank: parts[2].replace("Tank:", "").trim(),
+                    x: position.x,
+                    y: position.y,
 
-              x: position.x,
-              y: position.y,
+                    targetX: position.x,
+                    targetY: position.y
 
-              targetX: position.x,
-              targetY: position.y
+                };
 
-          });
+            }
+
+            const truck = this.trucks[id];
+
+            truck.state = parts[0].trim();
+            truck.location = location;
+            truck.tank = parts[2].replace("Tank:", "").trim();
+
+            truck.targetX = position.x;
+            truck.targetY = position.y;
 
         }
 
@@ -82,22 +87,32 @@ class WorldState {
                 tankCounts[location]++
             );
 
-            this.tanks.push({
+            const id = parseInt(key.replace("Tank ", ""));
 
-                id: parseInt(key.replace("Tank ", "")),
+            if (!this.tanks[id]) {
 
-                state: parts[0].trim(),
+                this.tanks[id] = {
 
-                location: location,
+                    id: id,
 
-                truck: parts[2].replace("Truck:", "").trim(),
-                x: position.x,
-                y: position.y,
+                    x: position.x,
+                    y: position.y,
 
-                targetX: position.x,
-                targetY: position.y
+                    targetX: position.x,
+                    targetY: position.y
 
-            });
+                };
+
+            }
+
+            const tank = this.tanks[id];
+
+            tank.state = parts[0].trim();
+            tank.location = location;
+            tank.truck = parts[2].replace("Truck:", "").trim();
+
+            tank.targetX = position.x;
+            tank.targetY = position.y;
 
         }
 
