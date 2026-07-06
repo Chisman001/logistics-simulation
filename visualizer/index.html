@@ -13,38 +13,27 @@
 <div id="summary"></div>
 
 <div id="controls">
-
-    <button id="prev">◀ Previous</button>
+    <button id="previous">⏮ Previous</button>
     <button id="play">▶ Play</button>
     <button id="pause">⏸ Pause</button>
-    <button id="next">Next ▶</button>
-
+    <button id="next">⏭ Next</button>
 </div>
 
 <div id="world">
 
-    <div class="station">
-
+    <div class="location">
         <h2>Point A</h2>
-
         <div id="pointA"></div>
-
     </div>
 
-    <div class="road">
-
+    <div class="location">
         <h2>Road</h2>
-
         <div id="road"></div>
-
     </div>
 
-    <div class="station">
-
+    <div class="location">
         <h2>Point C</h2>
-
         <div id="pointC"></div>
-
     </div>
 
 </div>
@@ -54,6 +43,7 @@
 <div id="currentEvent"></div>
 
 <script src="parser.js"></script>
+<script src="state.js"></script>
 <script src="renderer.js"></script>
 <script src="player.js"></script>
 <script src="app.js"></script>

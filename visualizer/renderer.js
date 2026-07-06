@@ -1,42 +1,86 @@
 class Renderer {
 
-    render(event) {
+    render(state) {
+        console.log(state);
+        console.log(state.trucks);
+        const trucks = state.trucks;
+        const tanks = state.tanks;
 
-        let html = "";
+        const pointA = document.getElementById("pointA");
+        const road = document.getElementById("road");
+        const pointC = document.getElementById("pointC");
 
-        html += `<h3>Time ${event.Time}</h3>`;
-        html += `<p>Day ${event.Day}</p>`;
-        html += `<p>${event.Event}</p>`;
+        pointA.innerHTML = "";
+        road.innerHTML = "";
+        pointC.innerHTML = "";
 
-        html += "<hr>";
+        this.renderTrucks(trucks, pointA, road, pointC);
 
-        html += "<h2>Truck Heads</h2>";
+        this.renderTanks(tanks, pointA, road, pointC);
 
-        for(const key in event){
+        document.getElementById("currentEvent").innerHTML =
+        `
+        <strong>Time:</strong> ${state.time}<br>
+        <strong>Day:</strong> ${state.day}<br>
+        <strong>Event:</strong> ${state.event}
+        `;
+    }
 
-            if(key.startsWith("Truck ")){
+    renderTrucks(trucks, pointA, road, pointC) {
 
-                html += `<p>${key}: ${event[key]}</p>`;
+        for(const truck of trucks){
+            console.log(truck);
+            const div = document.createElement("div");
 
+            div.className = "vehicle";
+
+            div.innerHTML =
+                `🚛 Truck ${truck.id}<br>${truck.state}`;
+
+            switch(truck.location){
+
+                case "POINT_A":
+                    pointA.appendChild(div);
+                    break;
+
+                case "POINT_C":
+                    pointC.appendChild(div);
+                    break;
+
+                default:
+                    road.appendChild(div);
             }
 
         }
 
-        html += "<hr>";
+    }
 
-        html += "<h2>Tanks</h2>";
+    renderTanks(tanks, pointA, road, pointC){
 
-        for(const key in event){
+        for(const tank of tanks){
 
-            if(key.startsWith("Tank ")){
+            const div = document.createElement("div");
 
-                html += `<p>${key}: ${event[key]}</p>`;
+            div.className = "vehicle";
 
+            div.innerHTML =
+                `🛢 Tank ${tank.id}<br>${tank.state}`;
+
+            switch(tank.location){
+
+                case "POINT_A":
+                    pointA.appendChild(div);
+                    break;
+
+                case "POINT_C":
+                    pointC.appendChild(div);
+                    break;
+
+                default:
+                    road.appendChild(div);
             }
 
         }
-
-        document.getElementById("currentEvent").innerHTML = html;
 
     }
 

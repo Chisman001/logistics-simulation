@@ -1,6 +1,9 @@
 class Player {
 
-    constructor() {
+    constructor(renderer) {
+        this.renderer = renderer;
+
+        this.state = new WorldState();    
         this.currentFrame = 0;
         this.events = [];
         this.playing = false;
@@ -10,10 +13,19 @@ class Player {
     loadEvents(data) {
         this.events = data;
         this.currentFrame = 0;
+        this.update();
     }
 
     currentEvent() {
         return this.events[this.currentFrame];
+    }
+
+    update() {
+
+        this.state.load(this.currentEvent());
+
+        this.renderer.render(this.state);
+
     }
 
     nextFrame() {
@@ -25,7 +37,8 @@ class Player {
 
         this.currentFrame++;
 
-        render(this.currentEvent());
+        this.update();
+
     }
 
     previousFrame() {
@@ -35,7 +48,8 @@ class Player {
 
         this.currentFrame--;
 
-        render(this.currentEvent());
+        this.update();
+
     }
 
     play() {
@@ -62,5 +76,3 @@ class Player {
     }
 
 }
-
-const player = new Player();

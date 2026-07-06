@@ -8,12 +8,10 @@ async function main() {
 
     player.loadEvents(events);
 
-    document.getElementById("eventCount").innerHTML = `
+    document.getElementById("summary").innerHTML = `
         <strong>Total Events:</strong> ${events.length}<br>
         <strong>Simulation Days:</strong> ${events[events.length - 1].Day}
     `;
-
-    renderer.render(player.currentEvent());
 
 }
 main()
