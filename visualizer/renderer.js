@@ -6,17 +6,37 @@ class Renderer {
         const trucks = state.trucks;
         const tanks = state.tanks;
 
-        const pointA = document.getElementById("pointA");
-        const road = document.getElementById("road");
-        const pointC = document.getElementById("pointC");
+        const pointATrucks = document.getElementById("pointATrucks");
+        const pointATanks = document.getElementById("pointATanks");
 
-        pointA.innerHTML = "";
-        road.innerHTML = "";
-        pointC.innerHTML = "";
+        const roadTrucks = document.getElementById("roadTrucks");
+        const roadTanks = document.getElementById("roadTanks");
 
-        this.renderTrucks(trucks, pointA, road, pointC);
+        const pointCTrucks = document.getElementById("pointCTrucks");
+        const pointCTanks = document.getElementById("pointCTanks");
 
-        this.renderTanks(tanks, pointA, road, pointC);
+        pointATrucks.innerHTML = "";
+        pointATanks.innerHTML = "";
+
+        roadTrucks.innerHTML = "";
+        roadTanks.innerHTML = "";
+
+        pointCTrucks.innerHTML = "";
+        pointCTanks.innerHTML = "";
+
+        this.renderTrucks(
+          trucks,
+          pointATrucks,
+          roadTrucks,
+          pointCTrucks
+        );
+
+        this.renderTanks(
+          tanks,
+          pointATanks,
+          roadTanks,
+          pointCTanks
+        );
 
         document.getElementById("currentEvent").innerHTML =
         `
@@ -26,58 +46,62 @@ class Renderer {
         `;
     }
 
-    renderTrucks(trucks, pointA, road, pointC) {
+    renderTrucks(trucks, pointATrucks, roadTrucks, pointCTrucks) {
 
         for(const truck of trucks){
             console.log(truck);
             const div = document.createElement("div");
 
-            div.className = "vehicle";
+            div.className = "truck";
 
-            div.innerHTML =
-                `🚛 Truck ${truck.id}<br>${truck.state}`;
+            div.innerHTML = `
+            🚛
+            <div>Truck ${truck.id}</div>
+            `;
 
             switch(truck.location){
 
                 case "POINT_A":
-                    pointA.appendChild(div);
+                    pointATrucks.appendChild(div);
                     break;
 
                 case "POINT_C":
-                    pointC.appendChild(div);
+                    pointCTrucks.appendChild(div);
                     break;
 
                 default:
-                    road.appendChild(div);
+                    roadTrucks.appendChild(div);
             }
 
         }
 
     }
 
-    renderTanks(tanks, pointA, road, pointC){
+    renderTanks(tanks, pointATanks, roadTanks, pointCTanks){
 
         for(const tank of tanks){
 
             const div = document.createElement("div");
 
-            div.className = "vehicle";
+            div.className = "tank";
 
-            div.innerHTML =
-                `🛢 Tank ${tank.id}<br>${tank.state}`;
+            div.innerHTML = `
+            🛢
+            <div>Tank ${tank.id}</div>
+            `;
 
             switch(tank.location){
 
                 case "POINT_A":
-                    pointA.appendChild(div);
+                    pointATanks.appendChild(div);
                     break;
 
                 case "POINT_C":
-                    pointC.appendChild(div);
+                    pointCTanks.appendChild(div);
                     break;
 
                 default:
-                    road.appendChild(div);
+                    roadTanks.appendChild(div);
             }
 
         }
